@@ -1,4 +1,3 @@
-// src/pages/pnplChampions.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import Layout from "../components/Layout";
@@ -19,7 +18,7 @@ export default function ChampionsPage() {
       // Fetch champions
       const { data: champData, error } = await supabase
         .from("pnpl_standings")
-        .select("*")
+        .select("season, manager, nhl_team") // <-- include nhl_team
         .not("champ", "is", null)
         .order("season", { ascending: false });
 
@@ -55,25 +54,11 @@ export default function ChampionsPage() {
         columns={[
           { key: "season", label: "Season" },
           { key: "logo_url", label: "Team", type: "logo" },
-          {
-            key: "champ",
-            label: "Champ Flag",
-            render: (row) =>
-              row.champ ? (
-                <img
-                  src={`/images/champs/${row.champ}.png`}
-                  alt="Champ Flag"
-                  style={{ width: "40px", height: "40px" }}
-                />
-              ) : (
-                ""
-              ),
-          },
           { key: "manager", label: "Manager" },
         ]}
         data={champions
           .sort((a, b) => b.season - a.season)
-          .map((row, i) => ({ ...row }))}
+          .map((row) => ({ ...row }))} // no champ key included
       />
     </Layout>
   );

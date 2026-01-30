@@ -30,10 +30,6 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -60,16 +56,32 @@ body {
   margin: 0;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
   min-height: 100svh;
+  background-color: #0B1C2D; /* navy background fills entire page */
+}
+
+#root {
+  width: 100%;
+  max-width: 1126px;
+  margin: 0 auto; /* centers the root */
   display: flex;
   flex-direction: column;
+  min-height: 100svh;
   box-sizing: border-box;
+  align-items: center; /* <-- this centers children horizontally */
+}
+
+/* Make main content stretch to push footer down */
+main {
+  flex: 1 0 auto;
+}
+
+footer {
+  flex-shrink: 0;
 }
 
 h1,
@@ -83,20 +95,30 @@ h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
   margin: 32px 0;
-  @media (max-width: 1024px) {
+}
+
+@media (max-width: 1024px) {
+  h1 {
     font-size: 36px;
     margin: 20px 0;
   }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  body {
+    font-size: 16px;
+  }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
 }
+
 p {
   margin: 0;
 }

@@ -4,7 +4,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f0f0f0;
+  background: #0B1C2D;
 }
 
 .card {
@@ -23,4 +23,18 @@
   border-radius: 0.5rem;
   border: none;
   cursor: pointer;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0B1C2D; /* matches layout */
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
