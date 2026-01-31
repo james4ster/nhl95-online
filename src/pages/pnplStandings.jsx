@@ -1,4 +1,3 @@
-// src/pages/pnplStandings.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import Layout from "../components/Layout";
@@ -9,7 +8,7 @@ export default function StandingsPage() {
   const [selectedSeason, setSelectedSeason] = useState("");
   const [standings, setStandings] = useState([]);
   const [playoffSeries, setPlayoffSeries] = useState([]);
-  const [logosMap, setLogosMap] = useState({});
+  const [activeTab, setActiveTab] = useState("regular"); // "regular" or "playoffs"
 
   // --- Fetch seasons ---
   useEffect(() => {
@@ -18,7 +17,8 @@ export default function StandingsPage() {
         .from("seasons")
         .select("*")
         .order("season", { ascending: false });
-      if (!error && data.length > 0) {
+
+      if (!error && data?.length) {
         setSeasons(data);
         setSelectedSeason(data[0].season);
       }
@@ -31,15 +31,13 @@ export default function StandingsPage() {
     if (!selectedSeason) return;
 
     async function fetchStandings() {
-      // Get team logos
       const { data: teams } = await supabase
         .from("nhl_teams")
         .select("code, logo_url");
-      const logos = {};
-      teams?.forEach((t) => (logos[t.code] = t.logo_url));
-      setLogosMap(logos);
 
-      // Get standings
+      const logosMap = {};
+      teams?.forEach((t) => (logosMap[t.code] = t.logo_url));
+
       const { data: standingsData } = await supabase
         .from("pnpl_standings")
         .select("*")
@@ -49,7 +47,7 @@ export default function StandingsPage() {
         setStandings(
           standingsData.map((row) => ({
             ...row,
-            logo_url: logos[row.nhl_team] || null,
+            logo_url: logosMap[row.nhl_team] || null,
             gp: row.w + row.l + (row.t || 0),
             wins: row.w,
             losses: row.l,
@@ -69,11 +67,18 @@ export default function StandingsPage() {
     fetchStandings();
   }, [selectedSeason]);
 
-  // --- Fetch playoff data ---
+  // --- Fetch playoffs ---
   useEffect(() => {
     if (!selectedSeason) return;
 
     async function fetchPlayoffs() {
+      const { data: teams } = await supabase
+        .from("nhl_teams")
+        .select("code, logo_url");
+
+      const logosMap = {};
+      teams?.forEach((t) => (logosMap[t.code] = t.logo_url));
+
       const { data: games } = await supabase
         .from("pnpl_raw_playoff_schedule")
         .select(`
@@ -94,22 +99,29 @@ export default function StandingsPage() {
 
       if (!games) return;
 
-      // Group games by series (round + lower/higher seed)
       const seriesMap = {};
+
       games.forEach((g) => {
         const lowSeed = Math.min(g.series_seed_home, g.series_seed_away);
         const highSeed = Math.max(g.series_seed_home, g.series_seed_away);
         const key = `${g.round}-${lowSeed}-${highSeed}`;
+
         if (!seriesMap[key]) seriesMap[key] = [];
         seriesMap[key].push(g);
       });
 
-      // Build series array
       const seriesList = Object.values(seriesMap).map((seriesGames) => {
         const winCount = {};
-        const gamesArray = seriesGames.map((g) => {
-          if (g.home_result === "W") winCount[g.home_team_code] = (winCount[g.home_team_code] || 0) + 1;
-          if (g.away_result === "W") winCount[g.away_team_code] = (winCount[g.away_team_code] || 0) + 1;
+        const firstGame = seriesGames[0];
+
+        const mappedGames = seriesGames.map((g) => {
+          if (g.home_result === "W")
+            winCount[g.home_team_code] =
+              (winCount[g.home_team_code] || 0) + 1;
+
+          if (g.away_result === "W")
+            winCount[g.away_team_code] =
+              (winCount[g.away_team_code] || 0) + 1;
 
           return {
             homeTeam: g.home_team_code,
@@ -123,12 +135,16 @@ export default function StandingsPage() {
           };
         });
 
-        // Determine series winner
-        const winner = Object.keys(winCount).reduce((a, b) => (winCount[a] >= winCount[b] ? a : b));
+        const winner =
+          Object.keys(winCount).length > 0
+            ? Object.keys(winCount).reduce((a, b) =>
+                winCount[a] >= winCount[b] ? a : b
+              )
+            : null;
 
         return {
-          round: seriesGames[0].round,
-          games: gamesArray,
+          round: firstGame.round,
+          games: mappedGames,
           winner,
         };
       });
@@ -137,7 +153,18 @@ export default function StandingsPage() {
     }
 
     fetchPlayoffs();
-  }, [selectedSeason, logosMap]);
+  }, [selectedSeason]);
+
+  // --- Helpers ---
+  const padScore = (score) =>
+    score === null || score === undefined
+      ? "--"
+      : String(score).padStart(2, "0");
+
+  const maxRound = Math.max(...playoffSeries.map((s) => s.round || 0));
+  const finalSeries = playoffSeries.find((s) => s.round === maxRound);
+  const championTeam = finalSeries?.winner;
+  const championStanding = standings.find((s) => s.nhl_team === championTeam);
 
   // --- Export CSV ---
   const handleExport = () => {
@@ -170,7 +197,6 @@ export default function StandingsPage() {
 
   return (
     <Layout>
-      {/* Page Title */}
       <h1
         style={{
           textAlign: "center",
@@ -184,14 +210,8 @@ export default function StandingsPage() {
         Standings
       </h1>
 
-      {/* Season Dropdown */}
-      <div
-        style={{
-          maxWidth: "400px",
-          margin: "0 auto 30px",
-          textAlign: "center",
-        }}
-      >
+      {/* Season Dropdown & Tabs */}
+      <div style={{ maxWidth: "400px", margin: "0 auto 30px", textAlign: "center" }}>
         <select
           value={selectedSeason}
           onChange={(e) => setSelectedSeason(e.target.value)}
@@ -203,10 +223,7 @@ export default function StandingsPage() {
             border: "2px solid #00FFFF",
             background: "#0B1C2D",
             color: "#FFFFFF",
-            appearance: "none",
-            cursor: "pointer",
             textAlign: "center",
-            boxShadow: "0 0 10px rgba(0,255,255,0.4)",
           }}
         >
           {seasons.map((season) => (
@@ -215,140 +232,181 @@ export default function StandingsPage() {
             </option>
           ))}
         </select>
+
+        {/* Tabs */}
+        <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginTop: "20px" }}>
+          <button
+            onClick={() => setActiveTab("regular")}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "6px",
+              border: activeTab === "regular" ? "2px solid #00FFFF" : "2px solid transparent",
+              background: activeTab === "regular" ? "#0B1C2D" : "rgba(0,255,255,0.1)",
+              color: "#00FFFF",
+              cursor: "pointer",
+              fontWeight: activeTab === "regular" ? "bold" : "normal",
+            }}
+          >
+            Regular Season
+          </button>
+          <button
+            onClick={() => setActiveTab("playoffs")}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "6px",
+              border: activeTab === "playoffs" ? "2px solid #00FFFF" : "2px solid transparent",
+              background: activeTab === "playoffs" ? "#0B1C2D" : "rgba(0,255,255,0.1)",
+              color: "#00FFFF",
+              cursor: "pointer",
+              fontWeight: activeTab === "playoffs" ? "bold" : "normal",
+            }}
+          >
+            Playoffs
+          </button>
+        </div>
       </div>
 
-      {/* Standings Table */}
-      <PnplTable
-        columns={[
-          { key: "rank", label: "#" },
-          {
-            key: "logo_url",
-            label: "Team",
-            render: (row) =>
-              row.logo_url ? (
-                <img
-                  src={row.logo_url}
-                  alt={row.nhl_team}
-                  style={{ width: "80px", height: "80px", objectFit: "contain" }}
-                />
-              ) : (
-                row.nhl_team
-              ),
-          },
-          { key: "manager", label: "Manager" },
-          { key: "gp", label: "GP" },
-          { key: "wins", label: "W" },
-          { key: "losses", label: "L" },
-          { key: "ties", label: "T" },
-          { key: "points", label: "PTS", bold: true, color: "#FFD700" },
-          { key: "goals_for", label: "GF" },
-          { key: "goals_against", label: "GA" },
-          { key: "gf_per_game", label: "GF/G" },
-          { key: "ga_per_game", label: "GA/G" },
-          { key: "tpr", label: "TPR" },
-          { key: "max_pts", label: "MAX" },
-        ]}
-        data={standings
-          .sort((a, b) => b.points - a.points)
-          .map((row, i) => ({ ...row, rank: i + 1 }))}
-      />
+      {/* Tab Content */}
+      <div style={{ marginTop: "40px" }}>
+        {activeTab === "regular" && (
+          <PnplTable
+            columns={[
+              { key: "rank", label: "#" },
+              {
+                key: "logo_url",
+                label: "Team",
+                render: (row) =>
+                  row.logo_url ? (
+                    <img
+                      src={row.logo_url}
+                      alt={row.nhl_team}
+                      style={{ width: "80px", height: "80px", objectFit: "contain" }}
+                    />
+                  ) : (
+                    row.nhl_team
+                  ),
+              },
+              { key: "manager", label: "Manager" },
+              { key: "gp", label: "GP" },
+              { key: "wins", label: "W" },
+              { key: "losses", label: "L" },
+              { key: "ties", label: "T" },
+              { key: "points", label: "PTS", bold: true, color: "#FFD700" },
+              { key: "goals_for", label: "GF" },
+              { key: "goals_against", label: "GA" },
+              { key: "gf_per_game", label: "GF/G" },
+              { key: "ga_per_game", label: "GA/G" },
+              { key: "tpr", label: "TPR" },
+              { key: "max_pts", label: "MAX" },
+            ]}
+            data={standings
+              .sort((a, b) => b.points - a.points)
+              .map((row, i) => ({ ...row, rank: i + 1 }))}
+          />
+        )}
 
-      {/* Export Button */}
-      <div style={{ textAlign: "center", marginTop: "20px" }}>
-        <button
-          onClick={handleExport}
+{activeTab === "playoffs" && (
+  <div style={{ display: "flex", gap: "60px", alignItems: "flex-start" }}>
+    {/* Rounds */}
+    {Array.from(
+      playoffSeries.reduce((acc, series) => {
+        if (!acc.has(series.round)) acc.set(series.round, []);
+        acc.get(series.round).push(series);
+        return acc;
+      }, new Map())
+    ).map(([round, seriesArr]) => (
+      <div key={round} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <h3 style={{ textAlign: "center" }}>Round {round}</h3>
+        {seriesArr.map((series, idx) => (
+          <div
+            key={idx}
+            style={{
+              padding: "12px",
+              background: "rgba(0,255,255,0.1)",
+              borderRadius: "8px",
+              minWidth: "200px",
+              border: "2px solid #00FFFF",
+            }}
+          >
+            {series.games.map((game, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "6px",
+                  padding: "4px 8px",
+                  minWidth: "200px",
+                }}
+              >
+                {/* Away */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>({game.awaySeed})</span>
+                  {game.awayTeamLogo && (
+                    <img src={game.awayTeamLogo} style={{ width: "28px", height: "28px" }} />
+                  )}
+                  <span
+                    style={{
+                      fontWeight: game.awayScore > game.homeScore ? "bold" : "normal",
+                      fontFamily: "monospace",
+                      minWidth: "28px",
+                      textAlign: "right",
+                    }}
+                  >
+                    {padScore(game.awayScore)}
+                  </span>
+                </div>
+
+                <div style={{ width: "40px" }} />
+
+                {/* Home */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span
+                    style={{
+                      fontWeight: game.homeScore > game.awayScore ? "bold" : "normal",
+                      fontFamily: "monospace",
+                      minWidth: "28px",
+                      textAlign: "left",
+                    }}
+                  >
+                    {padScore(game.homeScore)}
+                  </span>
+                  <span>({game.homeSeed})</span>
+                  {game.homeTeamLogo && (
+                    <img src={game.homeTeamLogo} style={{ width: "28px", height: "28px" }} />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    ))}
+
+    {/* Champion Panel aligned right */}
+    {championStanding && (
+      <div style={{ minWidth: "220px", marginTop: "60px" /* adjust to align vertically */ }}>
+        <h3 style={{ textAlign: "center", color: "#FFD700" }}>Champion</h3>
+        <div
           style={{
-            padding: "10px 20px",
-            fontSize: "1rem",
-            borderRadius: "6px",
-            border: "2px solid #00FFFF",
-            background: "#0B1C2D",
-            color: "#00FFFF",
-            cursor: "pointer",
-            boxShadow: "0 0 10px rgba(0,255,255,0.4)",
+            padding: "16px",
+            borderRadius: "10px",
+            background: "rgba(255,215,0,.15)",
+            textAlign: "center",
+            border: "2px solid #FFD700",
           }}
         >
-          Export CSV
-        </button>
-      </div>
-
-      {/* --- Playoff Bracket --- */}
-      <div style={{ marginTop: "50px" }}>
-        <h2 style={{ color: "#00FFFF", textAlign: "center", marginBottom: "20px" }}>
-          Playoffs
-        </h2>
-
-        <div style={{ display: "flex", justifyContent: "center", gap: "40px", flexWrap: "wrap" }}>
-          {Array.from(
-            playoffSeries.reduce((acc, series) => {
-              if (!acc.has(series.round)) acc.set(series.round, []);
-              acc.get(series.round).push(series);
-              return acc;
-            }, new Map())
-          ).map(([round, seriesArr]) => (
-            <div key={round} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <h3 style={{ textAlign: "center" }}>Round {round}</h3>
-              {seriesArr.map((series, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    padding: "12px",
-                    background: "rgba(0,255,255,0.1)",
-                    borderRadius: "8px",
-                    minWidth: "200px",
-                    boxShadow: series.winner
-                      ? "0 0 15px #00FFFF"
-                      : "0 0 5px rgba(0,255,255,0.2)",
-                    transition: "all 0.3s",
-                  }}
-                >
-                  {series.games.map((game, i) => (
-  <div
-    key={i}
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "4px 0",
-    }}
-  >
-    {/* Home */}
-    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-      <span>({game.homeSeed})</span>
-      {game.homeTeamLogo && (
-        <img
-          src={game.homeTeamLogo}
-          alt={game.homeTeam}
-          style={{ width: "30px", height: "30px", objectFit: "contain" }}
-        />
-      )}
-      <span style={{ fontWeight: game.homeScore > game.awayScore ? "bold" : "normal" }}>
-        {game.homeScore}
-      </span>
-    </div>
-
-    {/* Away */}
-    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-      <span>({game.awaySeed})</span>
-      {game.awayTeamLogo && (
-        <img
-          src={game.awayTeamLogo}
-          alt={game.awayTeam}
-          style={{ width: "30px", height: "30px", objectFit: "contain" }}
-        />
-      )}
-      <span style={{ fontWeight: game.awayScore > game.homeScore ? "bold" : "normal" }}>
-        {game.awayScore}
-      </span>
-    </div>
-  </div>
-))}
-
-                </div>
-              ))}
-            </div>
-          ))}
+          {championStanding.logo_url && (
+            <img src={championStanding.logo_url} style={{ width: "100px" }} />
+          )}
+          <div>{championStanding.manager}</div>
         </div>
+      </div>
+    )}
+  </div>
+)}
+
       </div>
     </Layout>
   );
