@@ -10,7 +10,7 @@ export default function Layout({ children }) {
     {
       name: "Stats",
       subMenu: [
-        { name: "Manager", path: "/stats/manager" },
+        { name: "Manager", path: "/manager-stats" },
         { name: "Team", path: "/stats/team" },
       ],
     },
