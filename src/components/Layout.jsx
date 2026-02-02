@@ -16,6 +16,7 @@ export default function Layout({ children }) {
     },
     { name: "Records", path: "/records" },
     { name: "Champions", path: "/champions" },
+    { name: "Managers", path: "/managers" },
     { name: "More", path: "/more" },
   ];
 
@@ -31,7 +32,7 @@ export default function Layout({ children }) {
         flexDirection: "column",
       }}
     >
-      {/* Header / Logo */}
+      {/* Header */}
       <header
         style={{
           display: "flex",
@@ -67,14 +68,11 @@ export default function Layout({ children }) {
             >
               NHL95 Online
             </h1>
-            <p style={{ color: "#FFFFFF", fontSize: "1rem", marginTop: "4px" }}>
-              {/* Optional subtitle */}
-            </p>
           </div>
         </div>
       </header>
 
-      {/* Navigation Menu */}
+      {/* Navigation */}
       <nav
         style={{
           display: "flex",
@@ -89,8 +87,8 @@ export default function Layout({ children }) {
             key={idx}
             style={{ position: "relative", margin: "0 20px" }}
             onMouseEnter={() => setOpenSubmenu(idx)}
+            onMouseLeave={() => setOpenSubmenu(null)}
           >
-            {/* Parent link or text */}
             {item.path ? (
               <Link
                 to={item.path}
@@ -106,10 +104,11 @@ export default function Layout({ children }) {
                 }}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.boxShadow =
-                    "0 0 10px #00FFFF, 0 0 20px #00FFFF, 0 0 30px #00FFFF")
+                    "0 0 10px #00FFFF, 0 0 20px #00FFFF")
                 }
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.boxShadow = "0 0 8px rgba(0,255,255,0.3)")
+                  (e.currentTarget.style.boxShadow =
+                    "0 0 8px rgba(0,255,255,0.3)")
                 }
               >
                 {item.name}
@@ -141,10 +140,9 @@ export default function Layout({ children }) {
                   padding: "8px 0",
                   borderRadius: "6px",
                   boxShadow: "0 0 15px rgba(0,255,255,0.5)",
-                  minWidth: "140px",
-                  zIndex: 50,
+                  minWidth: "160px",
+                  zIndex: 100,
                 }}
-                onMouseLeave={() => setOpenSubmenu(null)} // ← fixed here
               >
                 {item.subMenu.map((sub, sidx) => (
                   <Link
@@ -156,10 +154,10 @@ export default function Layout({ children }) {
                       color: "#00FFFF",
                       textDecoration: "none",
                       fontWeight: "bold",
-                      transition: "all 0.2s ease",
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "rgba(0,255,255,0.2)")
+                      (e.currentTarget.style.background =
+                        "rgba(0,255,255,0.2)")
                     }
                     onMouseLeave={(e) =>
                       (e.currentTarget.style.background = "transparent")
