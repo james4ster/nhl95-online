@@ -118,7 +118,6 @@ export default function StandingsPage() {
           if (g.home_result === "W")
             winCount[g.home_team_code] =
               (winCount[g.home_team_code] || 0) + 1;
-
           if (g.away_result === "W")
             winCount[g.away_team_code] =
               (winCount[g.away_team_code] || 0) + 1;
@@ -156,44 +155,19 @@ export default function StandingsPage() {
   }, [selectedSeason]);
 
   // --- Helpers ---
-  const padScore = (score) =>
-    score === null || score === undefined
-      ? "--"
-      : String(score).padStart(2, "0");
+const teamToManager = {};
+standings.forEach((s) => (teamToManager[s.nhl_team] = s.manager));
 
-  const maxRound = Math.max(...playoffSeries.map((s) => s.round || 0));
-  const finalSeries = playoffSeries.find((s) => s.round === maxRound);
-  const championTeam = finalSeries?.winner;
-  const championStanding = standings.find((s) => s.nhl_team === championTeam);
+const padScore = (score) =>
+  score === null || score === undefined
+    ? "--"
+    : String(score).padStart(2, "0");
 
-  // --- Export CSV ---
-  const handleExport = () => {
-    const csv = [
-      ["#", "Team", "Manager", "GP", "W", "L", "T", "PTS", "GF", "GA"],
-      ...standings.map((row, i) => [
-        i + 1,
-        row.nhl_team,
-        row.manager,
-        row.gp,
-        row.wins,
-        row.losses,
-        row.ties,
-        row.points,
-        row.goals_for,
-        row.goals_against,
-      ]),
-    ]
-      .map((r) => r.join(","))
-      .join("\n");
+const maxRound = Math.max(...playoffSeries.map((s) => s.round || 0));
+const finalSeries = playoffSeries.find((s) => s.round === maxRound);
+const championTeam = finalSeries?.winner;
+const championStanding = standings.find((s) => s.nhl_team === championTeam);
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `pnpl_standings_season_${selectedSeason}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <Layout>
@@ -305,108 +279,158 @@ export default function StandingsPage() {
           />
         )}
 
-{activeTab === "playoffs" && (
-  <div style={{ display: "flex", gap: "60px", alignItems: "flex-start" }}>
-    {/* Rounds */}
-    {Array.from(
-      playoffSeries.reduce((acc, series) => {
-        if (!acc.has(series.round)) acc.set(series.round, []);
-        acc.get(series.round).push(series);
-        return acc;
-      }, new Map())
-    ).map(([round, seriesArr]) => (
-      <div key={round} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        <h3 style={{ textAlign: "center" }}>Round {round}</h3>
-        {seriesArr.map((series, idx) => (
-          <div
-            key={idx}
-            style={{
-              padding: "12px",
-              background: "rgba(0,255,255,0.1)",
-              borderRadius: "8px",
-              minWidth: "200px",
-              border: "2px solid #00FFFF",
-            }}
-          >
-            {series.games.map((game, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "6px",
-                  padding: "4px 8px",
-                  minWidth: "200px",
-                }}
-              >
-                {/* Away */}
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span>({game.awaySeed})</span>
-                  {game.awayTeamLogo && (
-                    <img src={game.awayTeamLogo} style={{ width: "28px", height: "28px" }} />
-                  )}
-                  <span
-                    style={{
-                      fontWeight: game.awayScore > game.homeScore ? "bold" : "normal",
-                      fontFamily: "monospace",
-                      minWidth: "28px",
-                      textAlign: "right",
-                    }}
-                  >
-                    {padScore(game.awayScore)}
-                  </span>
-                </div>
+        {activeTab === "playoffs" && (
+          <div style={{ display: "flex", gap: "60px", alignItems: "flex-start" }}>
+            {/* Rounds */}
+            {Array.from(
+              playoffSeries.reduce((acc, series) => {
+                if (!acc.has(series.round)) acc.set(series.round, []);
+                acc.get(series.round).push(series);
+                return acc;
+              }, new Map())
+            ).map(([round, seriesArr]) => (
+              <div key={round} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <h3 style={{ textAlign: "center" }}>Round {round}</h3>
+                {seriesArr.map((series, idx) => {
+  const firstGame = series.games[0];
+  const awayManager = teamToManager[firstGame.awayTeam];
+  const homeManager = teamToManager[firstGame.homeTeam];
 
-                <div style={{ width: "40px" }} />
+  return (
+    <div
+      key={idx}
+      style={{
+        padding: "12px",
+        background: "rgba(0,255,255,0.1)",
+        borderRadius: "8px",
+        minWidth: "200px",
+        border: "2px solid #00FFFF",
+      }}
+    >
+   {/* --- MATCHUP HEADER ABOVE BOX --- */}
+<div style={{
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "20px",
+  marginBottom: "8px"
+}}>
+  {/* Away / VS / Home */}
+  <div style={{ textAlign: "center" }}>
+    <div style={{ fontSize: "0.9rem", color: "#00FFFF", marginBottom: "4px" }}>({firstGame.awaySeed})</div>
+    <img src={firstGame.awayTeamLogo} style={{ height: "32px", width: "32px", objectFit: "contain", display: "block", margin: "0 auto" }} />
+    <div style={{ fontWeight: "bold", marginTop: "4px" }}>{awayManager}</div>
+  </div>
 
-                {/* Home */}
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span
-                    style={{
-                      fontWeight: game.homeScore > game.awayScore ? "bold" : "normal",
-                      fontFamily: "monospace",
-                      minWidth: "28px",
-                      textAlign: "left",
-                    }}
-                  >
-                    {padScore(game.homeScore)}
-                  </span>
-                  <span>({game.homeSeed})</span>
-                  {game.homeTeamLogo && (
-                    <img src={game.homeTeamLogo} style={{ width: "28px", height: "28px" }} />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    ))}
+  <div style={{
+    fontWeight: "bold",
+    fontSize: "1rem",
+    color: "#FFD700",
+    transform: "rotate(-10deg)"
+  }}>
+    vs
+  </div>
 
-    {/* Champion Panel aligned right */}
-    {championStanding && (
-      <div style={{ minWidth: "220px", marginTop: "60px" /* adjust to align vertically */ }}>
-        <h3 style={{ textAlign: "center", color: "#FFD700" }}>Champion</h3>
+  <div style={{ textAlign: "center" }}>
+    <div style={{ fontSize: "0.9rem", color: "#00FFFF", marginBottom: "4px" }}>({firstGame.homeSeed})</div>
+    <img src={firstGame.homeTeamLogo} style={{ height: "32px", width: "32px", objectFit: "contain", display: "block", margin: "0 auto" }} />
+    <div style={{ fontWeight: "bold", marginTop: "4px" }}>{homeManager}</div>
+  </div>
+</div>
+
+{/* --- SEPARATOR LINE --- */}
+<div
+  style={{
+    height: "2px",
+    width: "100%",
+    background: "linear-gradient(to right, #00FFFF, #FFD700)",
+    borderRadius: "1px",
+    margin: "6px 0 12px 0"
+  }}
+/>
+
+
+      {/* --- EXISTING GAME BOXES --- */}
+      {series.games.map((game, i) => (
         <div
+          key={i}
           style={{
-            padding: "16px",
-            borderRadius: "10px",
-            background: "rgba(255,215,0,.15)",
-            textAlign: "center",
-            border: "2px solid #FFD700",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "6px",
+            padding: "4px 8px",
+            minWidth: "200px",
           }}
         >
-          {championStanding.logo_url && (
-            <img src={championStanding.logo_url} style={{ width: "100px" }} />
-          )}
-          <div>{championStanding.manager}</div>
-        </div>
-      </div>
-    )}
-  </div>
-)}
+          {/* Away */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span>({game.awaySeed})</span>
+            {game.awayTeamLogo && (
+              <img src={game.awayTeamLogo} style={{ width: "28px", height: "28px" }} />
+            )}
+            <span
+              style={{
+                fontWeight: game.awayScore > game.homeScore ? "bold" : "normal",
+                fontFamily: "monospace",
+                minWidth: "28px",
+                textAlign: "right",
+              }}
+            >
+              {padScore(game.awayScore)}
+            </span>
+          </div>
 
+          <div style={{ width: "40px" }} />
+
+          {/* Home */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span
+              style={{
+                fontWeight: game.homeScore > game.awayScore ? "bold" : "normal",
+                fontFamily: "monospace",
+                minWidth: "28px",
+                textAlign: "left",
+              }}
+            >
+              {padScore(game.homeScore)}
+            </span>
+            <span>({game.homeSeed})</span>
+            {game.homeTeamLogo && (
+              <img src={game.homeTeamLogo} style={{ width: "28px", height: "28px" }} />
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+})}
+
+              </div>
+            ))}
+
+            {/* Champion Panel aligned right */}
+            {championStanding && (
+              <div style={{ minWidth: "220px", marginTop: "60px" }}>
+                <h3 style={{ textAlign: "center", color: "#FFD700" }}>Champion</h3>
+                <div
+                  style={{
+                    padding: "16px",
+                    borderRadius: "10px",
+                    background: "rgba(255,215,0,.15)",
+                    textAlign: "center",
+                    border: "2px solid #FFD700",
+                  }}
+                >
+                  {championStanding.logo_url && (
+                    <img src={championStanding.logo_url} style={{ width: "100px" }} />
+                  )}
+                  <div>{championStanding.manager}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Layout>
   );

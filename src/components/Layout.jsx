@@ -21,16 +21,16 @@ export default function Layout({ children }) {
 
   return (
     <div
-    style={{
-      minHeight: "100vh",        // full viewport height
-      width: "100vw",            // full viewport width
-      background: "#0B1C2D",     // same navy as main content
-      fontFamily: "monospace",
-      color: "#FFFFFF",
-      display: "flex",
-      flexDirection: "column",
-    }}
-  >
+      style={{
+        minHeight: "100vh",
+        width: "100vw",
+        background: "#0B1C2D",
+        fontFamily: "monospace",
+        color: "#FFFFFF",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* Header / Logo */}
       <header
         style={{
@@ -45,7 +45,7 @@ export default function Layout({ children }) {
         <div style={{ display: "flex", alignItems: "center" }}>
           <Link to="/">
             <img
-              src="/images/logo.jpg" // <-- fixed: no import, just public path
+              src="/images/logo.jpg"
               alt="League Logo"
               style={{
                 width: "80px",
@@ -67,9 +67,8 @@ export default function Layout({ children }) {
             >
               NHL95 Online
             </h1>
-
             <p style={{ color: "#FFFFFF", fontSize: "1rem", marginTop: "4px" }}>
-              {/* add text here later if needed under Logo text */}
+              {/* Optional subtitle */}
             </p>
           </div>
         </div>
@@ -92,29 +91,30 @@ export default function Layout({ children }) {
             onMouseEnter={() => setOpenSubmenu(idx)}
             onMouseLeave={() => setOpenSubmenu(null)}
           >
+            {/* Parent link or text */}
             {item.path ? (
               <Link
-              to={item.path}
-              style={{
-                color: "#00FFFF",
-                textDecoration: "none",
-                fontWeight: "bold",
-                fontSize: "1.1rem",
-                padding: "6px 12px",
-                borderRadius: "6px",
-                transition: "all 0.3s ease",
-                boxShadow: "0 0 8px rgba(0,255,255,0.3)",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.boxShadow =
-                  "0 0 10px #00FFFF, 0 0 20px #00FFFF, 0 0 30px #00FFFF")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.boxShadow = "0 0 8px rgba(0,255,255,0.3)")
-              }
-            >
-              {item.name}
-            </Link>
+                to={item.path}
+                style={{
+                  color: "#00FFFF",
+                  textDecoration: "none",
+                  fontWeight: "bold",
+                  fontSize: "1.1rem",
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 0 8px rgba(0,255,255,0.3)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.boxShadow =
+                    "0 0 10px #00FFFF, 0 0 20px #00FFFF, 0 0 30px #00FFFF")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 0 8px rgba(0,255,255,0.3)")
+                }
+              >
+                {item.name}
+              </Link>
             ) : (
               <span
                 style={{
@@ -158,8 +158,12 @@ export default function Layout({ children }) {
                       fontWeight: "bold",
                       transition: "all 0.2s ease",
                     }}
-                    onMouseEnter={(e) => (e.target.style.background = "rgba(0,255,255,0.2)")}
-                    onMouseLeave={(e) => (e.target.style.background = "transparent")}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "rgba(0,255,255,0.2)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
                   >
                     {sub.name}
                   </Link>
@@ -172,32 +176,31 @@ export default function Layout({ children }) {
 
       {/* Page Content */}
       <main
-  style={{
-    padding: "40px 16px",
-    width: "100%",       // ensure it spans the full width
-    maxWidth: "1200px",  // content width limit
-    margin: "0 auto",
-    flex: 1,             // grow to fill remaining vertical space
-    display: "flex",
-    flexDirection: "column",
-  }}
->
-  {children}
-</main>
+        style={{
+          padding: "40px 16px",
+          width: "100%",
+          maxWidth: "1200px",
+          margin: "0 auto",
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {children}
+      </main>
 
       {/* Footer */}
       <footer
-  style={{
-    textAlign: "center",
-    padding: "16px",
-    borderTop: "2px solid #00FFFF",
-    color: "#00FFFF",
-    marginTop: "auto", // <-- this pushes footer to the bottom
-  }}
->
-  © {new Date().getFullYear()} PNPL League
-</footer>
-
+        style={{
+          textAlign: "center",
+          padding: "16px",
+          borderTop: "2px solid #00FFFF",
+          color: "#00FFFF",
+          marginTop: "auto",
+        }}
+      >
+        © {new Date().getFullYear()} PNPL League
+      </footer>
     </div>
   );
 }
