@@ -89,7 +89,6 @@ export default function Layout({ children }) {
             key={idx}
             style={{ position: "relative", margin: "0 20px" }}
             onMouseEnter={() => setOpenSubmenu(idx)}
-            onMouseLeave={() => setOpenSubmenu(null)}
           >
             {/* Parent link or text */}
             {item.path ? (
@@ -145,6 +144,7 @@ export default function Layout({ children }) {
                   minWidth: "140px",
                   zIndex: 50,
                 }}
+                onMouseLeave={() => setOpenSubmenu(null)} // ← fixed here
               >
                 {item.subMenu.map((sub, sidx) => (
                   <Link

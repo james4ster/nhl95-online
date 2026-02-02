@@ -1,4 +1,5 @@
 import Layout from "../components/Layout";
+import { useEffect, useState } from "react";
 
 export default function HomePage() {
   // Placeholder data for highlights & news
@@ -14,14 +15,42 @@ export default function HomePage() {
     "Check out the Champions page for last season's winner!",
   ];
 
+  // --- Animated Stat Component ---
+  const AnimatedStat = ({ value }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+      let start = 0;
+      const end = Number(value);
+      if (end === 0) return;
+
+      const stepTime = 50; // ms per increment
+      const increment = Math.ceil(end / 20); // 20 steps
+
+      const timer = setInterval(() => {
+        start += increment;
+        if (start >= end) {
+          setCount(end);
+          clearInterval(timer);
+        } else {
+          setCount(start);
+        }
+      }, stepTime);
+
+      return () => clearInterval(timer);
+    }, [value]);
+
+    return <span style={{ color: "#FFD700" }}>{count}</span>;
+  };
+
   return (
     <Layout>
       {/* Outer page border reflecting NHL95 ice */}
       <div
         style={{
-          minHeight: "calc(100vh - 80px)", // leaving room for header/footer
+          minHeight: "calc(100vh - 80px)",
           border: "20px solid #A0E5FF",
-          borderImage: "url('/images/ice_border.png') 30 stretch", // optional ice texture
+          borderImage: "url('/images/ice_border.png') 30 stretch",
           padding: "20px",
           background: "linear-gradient(to bottom, #0B1C2D, #071026)",
           boxSizing: "border-box",
@@ -30,10 +59,23 @@ export default function HomePage() {
           gap: "30px",
         }}
       >
+        <style>{`
+          @keyframes pulse {
+            0% { filter: drop-shadow(0 0 10px #00FFFF); }
+            50% { filter: drop-shadow(0 0 25px #00FFFF); }
+            100% { filter: drop-shadow(0 0 10px #00FFFF); }
+          }
+
+          @keyframes scrollNews {
+            0% { top: 100%; }
+            100% { top: -100%; }
+          }
+        `}</style>
+
         {/* Hero Section */}
         <div style={{ textAlign: "center" }}>
           <img
-            src="/images/logo.jpg" // <-- fixed: just public path, no import
+            src="/images/logo.jpg"
             alt="NHL95 League Logo"
             style={{
               width: "200px",
@@ -41,6 +83,7 @@ export default function HomePage() {
               objectFit: "contain",
               marginBottom: "20px",
               filter: "drop-shadow(0 0 20px #00FFFF)",
+              animation: "pulse 2s infinite alternate",
             }}
           />
           <h1
@@ -57,7 +100,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Main Content: Left = Highlights, Right = News/Discord */}
+        {/* Main Content: Highlights & News */}
         <div
           style={{
             display: "flex",
@@ -66,7 +109,7 @@ export default function HomePage() {
             justifyContent: "center",
           }}
         >
-          {/* Left Panel: Highlights */}
+          {/* Highlights Panel */}
           <div
             style={{
               flex: "1 1 300px",
@@ -77,7 +120,13 @@ export default function HomePage() {
               boxShadow: "0 0 15px rgba(0,255,255,0.5)",
             }}
           >
-            <h2 style={{ color: "#00FFFF", marginBottom: "15px", textAlign: "center" }}>
+            <h2
+              style={{
+                color: "#00FFFF",
+                marginBottom: "15px",
+                textAlign: "center",
+              }}
+            >
               League Highlights
             </h2>
             {highlights.map((h, i) => (
@@ -93,12 +142,12 @@ export default function HomePage() {
                 }}
               >
                 <span>{h.title}</span>
-                <span style={{ color: "#FFD700" }}>{h.value}</span>
+                <AnimatedStat value={h.value} />
               </div>
             ))}
           </div>
 
-          {/* Right Panel: News / Discord */}
+          {/* News Panel */}
           <div
             style={{
               flex: "1 1 300px",
@@ -107,19 +156,45 @@ export default function HomePage() {
               borderRadius: "12px",
               padding: "20px",
               boxShadow: "0 0 15px rgba(0,255,255,0.5)",
+              overflow: "hidden",
             }}
           >
-            <h2 style={{ color: "#00FFFF", marginBottom: "15px", textAlign: "center" }}>
+            <h2
+              style={{
+                color: "#00FFFF",
+                marginBottom: "15px",
+                textAlign: "center",
+              }}
+            >
               News & Community
             </h2>
-            <ul style={{ color: "#FFFFFF", paddingLeft: "20px" }}>
-              {news.map((n, i) => (
-                <li key={i} style={{ marginBottom: "8px" }}>
-                  {n}
-                </li>
-              ))}
-            </ul>
 
+            {/* News Ticker */}
+            <div
+              style={{
+                overflow: "hidden",
+                height: "80px",
+                position: "relative",
+              }}
+            >
+              <ul
+                style={{
+                  position: "absolute",
+                  animation: "scrollNews 10s linear infinite",
+                  margin: 0,
+                  padding: 0,
+                  listStyle: "none",
+                }}
+              >
+                {news.map((n, i) => (
+                  <li key={i} style={{ marginBottom: "15px", color: "#FFFFFF" }}>
+                    {n}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Discord Button */}
             <div style={{ textAlign: "center", marginTop: "20px" }}>
               <a
                 href="https://discord.gg/w3xey3EV"
@@ -139,7 +214,8 @@ export default function HomePage() {
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "#00FFFF";
                   e.currentTarget.style.color = "#0B1C2D";
-                  e.currentTarget.style.boxShadow = "0 0 20px #00FFFF";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 30px #00FFFF, 0 0 50px #FFD700";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "transparent";
