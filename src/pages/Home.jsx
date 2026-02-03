@@ -1,8 +1,41 @@
 // src/pages/HomePage.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import Layout from "../components/Layout";
 import { supabase } from "../supabaseClient";
 import { nhlLogos } from "../constants/nhlLogos";
+
+// Animated Stat, memoized so it only animates on value change
+const AnimatedStat = memo(({ value }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const end = Number(value ?? 0);
+    setCount(0);
+
+    if (end === 0) {
+      setCount(0);
+      return;
+    }
+
+    let start = 0;
+    const stepTime = 50;
+    const increment = Math.ceil(end / 20);
+
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, stepTime);
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <span style={{ color: "#FFD700", fontWeight: "bold" }}>{count}</span>;
+});
 
 export default function HomePage() {
   const [seasonEnd, setSeasonEnd] = useState(null);
@@ -10,29 +43,57 @@ export default function HomePage() {
   const [lastGames, setLastGames] = useState([]);
   const [topManagers, setTopManagers] = useState([]);
   const [highlights, setHighlights] = useState([]);
+  const [currentSeasonNumber, setCurrentSeasonNumber] = useState(null);
 
   // --- Load all data ---
   useEffect(() => {
     async function loadData() {
-      // Current season
+      // Get current season
       const { data: currentSeason } = await supabase
         .from("seasons")
-        .select("season, season_end_date")
+        .select("season, end_date")
         .order("season", { ascending: false })
         .limit(1)
         .single();
 
-      if (currentSeason) setSeasonEnd(currentSeason.season_end_date);
+      setCurrentSeasonNumber(currentSeason?.season ?? null);
 
-      // Highlights
-      const { data: managers } = await supabase.from("managers").select("*");
-      const { data: standings } = await supabase.from("pnpl_standings").select("*");
+      if (currentSeason?.end_date) {
+        const end = new Date(currentSeason.end_date);
+        end.setHours(23, 59, 59, 999);
+        setSeasonEnd(end.toISOString());
+      } else {
+        setSeasonEnd(null);
+      }
 
-      setHighlights([
-        { title: "Current Season", value: currentSeason?.season || "-" },
-        { title: "Managers", value: managers?.length || 0 },
-        { title: "Games Played", value: standings?.length || 0 },
-      ]);
+      // --- Highlights for current season ---
+      let managersCount = 0;
+      let gamesPlayed = 0;
+      let gamesRemaining = 0;
+
+      // Ensure currentSeason is valid
+      if (currentSeason?.season) {
+        const { data: standings, error } = await supabase
+          .from("pnpl_standings")
+          .select("manager, gp, total_games")
+          .eq("season", currentSeason.season);
+      
+        if (error) console.error("Error fetching standings:", error);
+      
+        const managersCount = standings?.length ?? 0;
+        const gamesPlayed = standings?.reduce((sum, s) => sum + (Number(s.gp) || 0), 0) / 2 || 0;
+        const gamesRemaining =
+          standings?.reduce((sum, s) => sum + ((Number(s.total_games) || 0) - (Number(s.gp) || 0)), 0) / 2 || 0;
+      
+        setHighlights([
+          { title: "Current Season", value: currentSeason.season },
+          { title: "Teams", value: managersCount },
+          { title: "Games Played", value: gamesPlayed },
+          { title: "Games Remaining", value: gamesRemaining },
+        ]);
+      }
+      
+
 
       // Last 5 games
       const { data: lastGamesData } = await supabase
@@ -74,45 +135,30 @@ export default function HomePage() {
   // Countdown timer
   useEffect(() => {
     if (!seasonEnd) return;
-    const timer = setInterval(() => {
+
+    const computeCountdown = () => {
       const now = new Date();
       const end = new Date(seasonEnd);
       const diff = end - now;
-      if (diff <= 0) {
-        setCountdown("Season Ended");
-        clearInterval(timer);
-        return;
-      }
+
+      if (diff <= 0) return "Season Ended";
+
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
       const minutes = Math.floor((diff / (1000 * 60)) % 60);
       const seconds = Math.floor((diff / 1000) % 60);
-      setCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    };
+
+    setCountdown(computeCountdown());
+
+    const timer = setInterval(() => {
+      setCountdown(computeCountdown());
     }, 1000);
 
     return () => clearInterval(timer);
   }, [seasonEnd]);
-
-  // Animated Stat
-  const AnimatedStat = ({ value }) => {
-    const [count, setCount] = useState(0);
-    useEffect(() => {
-      let start = 0;
-      const end = Number(value);
-      if (!end) return;
-      const stepTime = 50;
-      const increment = Math.ceil(end / 20);
-      const timer = setInterval(() => {
-        start += increment;
-        if (start >= end) {
-          setCount(end);
-          clearInterval(timer);
-        } else setCount(start);
-      }, stepTime);
-      return () => clearInterval(timer);
-    }, [value]);
-    return <span style={{ color: "#FFD700", fontWeight: "bold" }}>{count}</span>;
-  };
 
   return (
     <Layout>
@@ -138,43 +184,41 @@ export default function HomePage() {
         `}</style>
 
         {/* Hero Section */}
-        {/* Hero Section */}
-<div style={{ textAlign: "center" }}>
-<img
-  src="/images/logo.jpg"
-  alt="NHL95 League Logo"
-  style={{
-    width: "220px",
-    height: "220px",
-    objectFit: "contain",
-    animation: "icyPulse 2.6s ease-in-out infinite",
-    filter: `
-      drop-shadow(0 0 14px rgba(0,255,255,0.45))
-      drop-shadow(0 0 28px rgba(0,255,255,0.25))
-      drop-shadow(0 0 50px rgba(0,255,255,0.15))
-    `,
-  }}
-/>
+        <div style={{ textAlign: "center" }}>
+          <img
+            src="/images/logo.jpg"
+            alt="NHL95 League Logo"
+            style={{
+              width: "220px",
+              height: "220px",
+              objectFit: "contain",
+              animation: "icyPulse 2.6s ease-in-out infinite",
+              filter: `
+                drop-shadow(0 0 14px rgba(0,255,255,0.45))
+                drop-shadow(0 0 28px rgba(0,255,255,0.25))
+                drop-shadow(0 0 50px rgba(0,255,255,0.15))
+              `,
+            }}
+          />
 
-  <h1
-    style={{
-      color: "#00FFFF",
-      fontSize: "3rem",
-      textShadow: "0 0 10px #00FFFF, 0 0 20px #00FFFF",
-    }}
-  >
-    PNPL NHL95 League
-  </h1>
+          <h1
+            style={{
+              color: "#00FFFF",
+              fontSize: "3rem",
+              textShadow: "0 0 10px #00FFFF, 0 0 20px #00FFFF",
+            }}
+          >
+            PNPL NHL95 League
+          </h1>
 
-  {seasonEnd && (
-    <p style={{ color: "#FFD700", fontWeight: "bold", fontSize: "1.2rem" }}>
-      Season ends in: {countdown}
-    </p>
-  )}
-</div>
+          {seasonEnd && (
+            <p style={{ color: "#FFD700", fontWeight: "bold", fontSize: "1.2rem" }}>
+              Season ends in: {countdown}
+            </p>
+          )}
+        </div>
 
-
-        {/* Highlights + Top Managers */}
+        {/* Season Overview + Top Managers */}
         <div style={{ display: "flex", gap: "30px", flexWrap: "wrap", justifyContent: "center" }}>
           <div
             style={{
@@ -186,7 +230,7 @@ export default function HomePage() {
               boxShadow: "0 0 15px rgba(0,255,255,0.5)",
             }}
           >
-            <h2 style={{ color: "#00FFFF", textAlign: "center", marginBottom: "15px" }}>League Highlights</h2>
+            <h2 style={{ color: "#00FFFF", textAlign: "center", marginBottom: "15px" }}>Season Overview</h2>
             {highlights.map((h, i) => (
               <div
                 key={i}
@@ -212,9 +256,7 @@ export default function HomePage() {
               >
                 <img src={m.logo} style={{ width: "32px", height: "32px" }} />
                 <span style={{ color: "#FFFFFF", fontWeight: "bold" }}>{m.manager}</span>
-                <span
-                  style={{ marginLeft: "auto", color: "#FFD700", fontWeight: "bold" }}
-                >
+                <span style={{ marginLeft: "auto", color: "#FFD700", fontWeight: "bold" }}>
                   {m.pts} pts
                 </span>
               </div>
