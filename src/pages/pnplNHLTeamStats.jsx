@@ -1,10 +1,11 @@
-// src/pages/pnplManagerStats.jsx
+// src/pages/pnplNHLTeamStats.jsx
 import { useEffect, useState } from "react";
-import { supabase } from "../supabaseClient";
 import Layout from "../components/Layout";
+import { supabase } from "../supabaseClient";
+import { nhlLogos } from "../constants/nhlLogos";
 
-export default function ManagerStatsPage() {
-  const [managerStats, setManagerStats] = useState([]);
+export default function TeamStatsPage() {
+  const [teamStats, setTeamStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState({
     key: "pts",
@@ -12,21 +13,22 @@ export default function ManagerStatsPage() {
   });
 
   useEffect(() => {
-    async function fetchManagerStats() {
+    async function fetchTeamStats() {
       const { data, error } = await supabase
-        .from("pnpl_manager_stats")
+        .from("pnpl_nhl_team_aggr_stats_vw")
         .select("*");
 
       if (!error && data?.length) {
-        setManagerStats(data);
+        setTeamStats(data);
       }
       setLoading(false);
     }
-    fetchManagerStats();
+
+    fetchTeamStats();
   }, []);
 
   const handleSort = (key) => {
-    let direction = "desc"; // default descending
+    let direction = "desc";
     if (sortConfig.key === key && sortConfig.direction === "desc") {
       direction = "asc";
     }
@@ -34,7 +36,7 @@ export default function ManagerStatsPage() {
   };
 
   const getSortedData = () => {
-    const sorted = [...managerStats].sort((a, b) => {
+    const sorted = [...teamStats].sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
 
@@ -45,34 +47,37 @@ export default function ManagerStatsPage() {
       const bNum = typeof bVal === "string" ? parseFloat(bVal) : bVal;
 
       if (sortConfig.direction === "asc") return aNum - bNum;
-      else return bNum - aNum;
+      return bNum - aNum;
     });
 
-    // Add dynamic rank for the first column
+    // add rank column
     return sorted.map((row, i) => ({ ...row, rank: i + 1 }));
   };
 
   const columns = [
     { key: "rank", label: "#" },
-    { key: "manager", label: "Manager", align: "left" },
+    { key: "logo", label: "Team", align: "left" },
+    //{ key: "nhl_team", label: "Team", align: "left" },
     { key: "gp", label: "GP" },
     { key: "w", label: "W" },
     { key: "l", label: "L" },
     { key: "t", label: "T" },
-    { key: "pts", label: "PTS" }, // no bold or gold
-    { key: "pts_pct", label: "PTS %" },
+    { key: "pts", label: "PTS" },
+    { key: "pts_fraction", label: "PTS %" },
     { key: "gf", label: "GF" },
     { key: "ga", label: "GA" },
     { key: "gd", label: "GD" },
     { key: "gf_per_game", label: "GF/G" },
     { key: "ga_per_game", label: "GA/G" },
+    { key: "so", label: "SO" },
+    { key: "titles", label: "Titles" },
   ];
 
   if (loading) {
     return (
       <Layout>
         <div style={{ textAlign: "center", color: "#00FFFF", fontSize: "1.5rem" }}>
-          Loading manager statistics...
+          Loading team statistics...
         </div>
       </Layout>
     );
@@ -90,7 +95,7 @@ export default function ManagerStatsPage() {
           marginBottom: "30px",
         }}
       >
-        Manager Statistics
+        NHL Team Statistics
       </h1>
 
       <div style={{ overflowX: "auto" }}>
@@ -109,7 +114,8 @@ export default function ManagerStatsPage() {
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  onClick={() => handleSort(col.key)}
+                  onClick={col.key !== "logo" && col.key !== "rank" ? () => handleSort(col.key) : undefined}
+
                   style={{
                     padding: "16px 12px",
                     color: "#00FFFF",
@@ -121,33 +127,32 @@ export default function ManagerStatsPage() {
                     borderBottom: "2px solid rgba(0,255,255,0.3)",
                     transition: "background 0.2s ease",
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = "rgba(0,255,255,0.1)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "transparent")
-                  }
                 >
-                  {col.label}{" "}
-                  {sortConfig.key === col.key
-                    ? sortConfig.direction === "asc"
-                      ? " ↑"
-                      : " ↓"
-                    : " ↕"}
+                  {col.label}
+                  {col.key !== "logo" && col.key !== "rank" && (
+                    <>
+                      {" "}
+                      {sortConfig.key === col.key
+                        ? sortConfig.direction === "asc"
+                          ? " ↑"
+                          : " ↓"
+                        : " ↕"}
+                    </>
+                  )}
                 </th>
               ))}
             </tr>
           </thead>
+
           <tbody>
-            {getSortedData().map((manager, idx) => (
+            {getSortedData().map((team, idx) => (
               <tr
-                key={manager.manager}
+                key={team.nhl_team}
                 style={{
                   background:
                     idx % 2 === 0
                       ? "rgba(0,255,255,0.05)"
                       : "rgba(0,255,255,0.02)",
-                  transition: "background 0.2s ease",
                 }}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = "rgba(0,255,255,0.15)")
@@ -160,32 +165,56 @@ export default function ManagerStatsPage() {
                 }
               >
                 {columns.map((col) => {
-                  let cellColor = "#FFFFFF";
-                  let fontWeight = col.bold ? "bold" : "normal";
+                  let value = team[col.key];
+                  let color = "#FFFFFF";
+                  let fontWeight = "normal";
 
                   if (col.key === "gd") {
-                    cellColor = manager.gd >= 0 ? "#00FF00" : "#FF6B6B";
+                    color = value >= 0 ? "#00FF00" : "#FF6B6B";
                     fontWeight = "bold";
                   }
 
-                  // subtle background if this column is the sorted one
+                  if (col.key === "titles" && value > 0) {
+                    value = `🏆 ${value}`;
+                    fontWeight = "bold";
+                  }
+
+                  if (col.key === "pts_fraction") {
+                    value = parseFloat(value).toFixed(3);
+                  }
+
                   const background =
-                    sortConfig.key === col.key ? "rgba(0,255,255,0.08)" : "transparent";
+                    sortConfig.key === col.key
+                      ? "rgba(0,255,255,0.08)"
+                      : "transparent";
 
                   return (
                     <td
                       key={col.key}
                       style={{
                         padding: "12px",
-                        color: cellColor,
-                        fontWeight: fontWeight,
                         textAlign: col.align || "center",
+                        color,
+                        fontWeight,
                         background,
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {col.key === "pts_pct"
-                        ? parseFloat(manager.pts_pct).toFixed(3)
-                        : manager[col.key]}
+                      {col.key === "logo" ? (
+                        <img
+                          src={nhlLogos[team.nhl_team]}
+                          alt={team.nhl_team}
+                          style={{
+                            width: "36px",
+                            height: "36px",
+                            objectFit: "contain",
+                          }}
+                        />
+                      ) : col.key === "gd" && value > 0 ? (
+                        `+${value}`
+                      ) : (
+                        value
+                      )}
                     </td>
                   );
                 })}

@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export default function Layout({ children }) {
   const [openSubmenu, setOpenSubmenu] = useState(null);
+  const submenuTimeoutRef = useRef(null);
 
   const menuItems = [
     { name: "Home", path: "/" },
@@ -11,7 +12,7 @@ export default function Layout({ children }) {
       name: "Stats",
       subMenu: [
         { name: "Manager", path: "/manager-stats" },
-        { name: "Team", path: "/stats/team" },
+        { name: "Team", path: "/team-stats" } 
       ],
     },
     { name: "Records", path: "/records" },
@@ -19,6 +20,19 @@ export default function Layout({ children }) {
     { name: "Managers", path: "/managers" },
     { name: "More", path: "/more" },
   ];
+
+  const handleMouseEnter = (idx) => {
+    if (submenuTimeoutRef.current) {
+      clearTimeout(submenuTimeoutRef.current);
+    }
+    setOpenSubmenu(idx);
+  };
+
+  const handleMouseLeave = () => {
+    submenuTimeoutRef.current = setTimeout(() => {
+      setOpenSubmenu(null);
+    }, 150);
+  };
 
   return (
     <div
@@ -86,8 +100,8 @@ export default function Layout({ children }) {
           <div
             key={idx}
             style={{ position: "relative", margin: "0 20px" }}
-            onMouseEnter={() => setOpenSubmenu(idx)}
-            onMouseLeave={() => setOpenSubmenu(null)}
+            onMouseEnter={() => handleMouseEnter(idx)}
+            onMouseLeave={handleMouseLeave}
           >
             {item.path ? (
               <Link

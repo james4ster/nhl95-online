@@ -1,11 +1,11 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/Home.jsx";
 import StandingsPage from "./pages/pnplStandings.jsx";
 import ChampionsPage from "./pages/pnplChampions.jsx";
 import ManagerStatsPage from "./pages/pnplManagerStats.jsx";
 import ManagersOverview from "./pages/pnplManagersOverview.jsx";
-import ManagerProfile from "./pages/pnplManagerProfile.jsx"; 
+import ManagerProfile from "./pages/pnplManagerProfile.jsx";
+import TeamStatsPage from "./pages/pnplNHLTeamStats"; // no .jsx needed
 
 function App() {
   return (
@@ -17,6 +17,7 @@ function App() {
         <Route path="/manager-stats" element={<ManagerStatsPage />} />
         <Route path="/managers" element={<ManagersOverview />} />
         <Route path="/manager/:managerId" element={<ManagerProfile />} />
+        <Route path="/team-stats" element={<TeamStatsPage />} />
       </Routes>
     </Router>
   );
