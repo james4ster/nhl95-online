@@ -1,4 +1,3 @@
-// src/components/PnplTable.jsx
 export default function PnplTable({ columns, data }) {
   return (
     <div
@@ -13,8 +12,7 @@ export default function PnplTable({ columns, data }) {
       <table
         style={{
           width: "100%",
-          borderCollapse: "separate",
-          borderSpacing: "0",
+          borderCollapse: "collapse",
           fontFamily: "monospace",
         }}
       >
@@ -30,9 +28,10 @@ export default function PnplTable({ columns, data }) {
               <th
                 key={col.key}
                 style={{
-                  padding: "12px",
+                  padding: "6px 8px",
+                  whiteSpace: "nowrap",
                   fontWeight: "bold",
-                  textAlign: "center",
+                  textAlign: col.align || "center", // use column alignment
                 }}
               >
                 {col.label}
@@ -47,39 +46,32 @@ export default function PnplTable({ columns, data }) {
               key={i}
               style={{
                 background: i % 2 === 0 ? "#0B2A44" : "#0E3456",
-                transition: "all 0.3s ease",
+                transition: "all 0.25s ease",
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 0 15px rgba(0,255,255,0.5)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.boxShadow =
+                  "0 0 12px rgba(0,255,255,0.45)")
+              }
+              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
             >
               {columns.map((col) => {
                 let cellContent;
 
-                // Use custom render function if provided
                 if (col.render) {
-                  cellContent = col.render(row, i);
-                }
-                // Handle logos
-                else if (col.type === "logo" && row[col.key]) {
+                  cellContent = col.render(row);
+                } else if (col.type === "logo" && row[col.key]) {
                   cellContent = (
                     <img
                       src={row[col.key]}
                       alt=""
                       style={{
-                        width: "60px",
-                        height: "60px",
+                        width: "48px",
+                        height: "48px",
                         objectFit: "contain",
                       }}
                     />
                   );
-                }
-                // Default content
-                else {
+                } else {
                   cellContent = row[col.key] ?? "";
                 }
 
@@ -87,8 +79,9 @@ export default function PnplTable({ columns, data }) {
                   <td
                     key={col.key}
                     style={{
-                      padding: "12px",
-                      textAlign: "center",
+                      padding: "6px 8px",
+                      textAlign: col.align || "center",
+                      verticalAlign: "middle",
                       fontWeight: col.bold ? "bold" : "normal",
                       color: col.color
                         ? col.color

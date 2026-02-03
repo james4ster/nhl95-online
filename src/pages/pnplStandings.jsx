@@ -1,7 +1,9 @@
+// src/pages/StandingsPage.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import Layout from "../components/Layout";
 import PnplTable from "../components/PnplTable";
+import { nhlLogos } from "../constants/nhlLogos"; // ✅ import local logos
 
 export default function StandingsPage() {
   const [seasons, setSeasons] = useState([]);
@@ -31,12 +33,8 @@ export default function StandingsPage() {
     if (!selectedSeason) return;
 
     async function fetchStandings() {
-      const { data: teams } = await supabase
-        .from("nhl_teams")
-        .select("code, logo_url");
-
-      const logosMap = {};
-      teams?.forEach((t) => (logosMap[t.code] = t.logo_url));
+      // ✅ Use local nhlLogos instead of fetching from DB
+      const logosMap = nhlLogos;
 
       const { data: standingsData } = await supabase
         .from("pnpl_standings")
@@ -47,7 +45,7 @@ export default function StandingsPage() {
         setStandings(
           standingsData.map((row) => ({
             ...row,
-            logo_url: logosMap[row.nhl_team] || null,
+            logo_url: logosMap[row.nhl_team?.toUpperCase()] || "/images/nhl-logos/default.webp",
             gp: row.w + row.l + (row.t || 0),
             wins: row.w,
             losses: row.l,
@@ -72,12 +70,8 @@ export default function StandingsPage() {
     if (!selectedSeason) return;
 
     async function fetchPlayoffs() {
-      const { data: teams } = await supabase
-        .from("nhl_teams")
-        .select("code, logo_url");
-
-      const logosMap = {};
-      teams?.forEach((t) => (logosMap[t.code] = t.logo_url));
+      // ✅ Use local nhlLogos instead of fetching from DB
+      const logosMap = nhlLogos;
 
       const { data: games } = await supabase
         .from("pnpl_raw_playoff_schedule")
@@ -100,12 +94,10 @@ export default function StandingsPage() {
       if (!games) return;
 
       const seriesMap = {};
-
       games.forEach((g) => {
         const lowSeed = Math.min(g.series_seed_home, g.series_seed_away);
         const highSeed = Math.max(g.series_seed_home, g.series_seed_away);
         const key = `${g.round}-${lowSeed}-${highSeed}`;
-
         if (!seriesMap[key]) seriesMap[key] = [];
         seriesMap[key].push(g);
       });
@@ -115,12 +107,8 @@ export default function StandingsPage() {
         const firstGame = seriesGames[0];
 
         const mappedGames = seriesGames.map((g) => {
-          if (g.home_result === "W")
-            winCount[g.home_team_code] =
-              (winCount[g.home_team_code] || 0) + 1;
-          if (g.away_result === "W")
-            winCount[g.away_team_code] =
-              (winCount[g.away_team_code] || 0) + 1;
+          if (g.home_result === "W") winCount[g.home_team_code] = (winCount[g.home_team_code] || 0) + 1;
+          if (g.away_result === "W") winCount[g.away_team_code] = (winCount[g.away_team_code] || 0) + 1;
 
           return {
             homeTeam: g.home_team_code,
@@ -129,16 +117,14 @@ export default function StandingsPage() {
             awaySeed: g.series_seed_away,
             homeScore: g.score_home,
             awayScore: g.score_away,
-            homeTeamLogo: logosMap[g.home_team_code] || null,
-            awayTeamLogo: logosMap[g.away_team_code] || null,
+            homeTeamLogo: logosMap[g.home_team_code?.toUpperCase()] || "/images/nhl-logos/default.webp",
+            awayTeamLogo: logosMap[g.away_team_code?.toUpperCase()] || "/images/nhl-logos/default.webp",
           };
         });
 
         const winner =
           Object.keys(winCount).length > 0
-            ? Object.keys(winCount).reduce((a, b) =>
-                winCount[a] >= winCount[b] ? a : b
-              )
+            ? Object.keys(winCount).reduce((a, b) => (winCount[a] >= winCount[b] ? a : b))
             : null;
 
         return {
@@ -252,10 +238,16 @@ const championStanding = standings.find((s) => s.nhl_team === championTeam);
                 render: (row) =>
                   row.logo_url ? (
                     <img
-                      src={row.logo_url}
-                      alt={row.nhl_team}
-                      style={{ width: "80px", height: "80px", objectFit: "contain" }}
-                    />
+  src={row.logo_url}
+  alt={row.nhl_team}
+  style={{
+    width: "40px",
+    height: "40px",
+    objectFit: "contain",
+    display: "block",
+    margin: "0 auto" // center in the cell
+  }}
+/>
                   ) : (
                     row.nhl_team
                   ),
@@ -422,9 +414,13 @@ const championStanding = standings.find((s) => s.nhl_team === championTeam);
                     border: "2px solid #FFD700",
                   }}
                 >
-                  {championStanding.logo_url && (
-                    <img src={championStanding.logo_url} style={{ width: "100px" }} />
-                  )}
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
+  <img
+    src={championStanding.logo_url}
+    style={{ width: "70px", height: "70px", objectFit: "contain" }}
+  />
+</div>
+
                   <div>{championStanding.manager}</div>
                 </div>
               </div>

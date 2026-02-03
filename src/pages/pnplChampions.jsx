@@ -1,24 +1,19 @@
+// src/pages/ChampionsPage.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import Layout from "../components/Layout";
 import PnplTable from "../components/PnplTable";
+import { nhlLogos } from "../constants/nhlLogos";
 
 export default function ChampionsPage() {
   const [champions, setChampions] = useState([]);
 
   useEffect(() => {
     async function fetchChampions() {
-      // Fetch NHL team logos
-      const { data: teams } = await supabase
-        .from("nhl_teams")
-        .select("code, logo_url");
-      const logosMap = {};
-      teams?.forEach((t) => (logosMap[t.code] = t.logo_url));
-
       // Fetch champions
       const { data: champData, error } = await supabase
         .from("pnpl_standings")
-        .select("season, manager, nhl_team") // <-- include nhl_team
+        .select("season, manager, nhl_team") // include nhl_team
         .not("champ", "is", null)
         .order("season", { ascending: false });
 
@@ -26,7 +21,8 @@ export default function ChampionsPage() {
         setChampions(
           champData.map((row) => ({
             ...row,
-            logo_url: logosMap[row.nhl_team] || null,
+            // Use local logos instead of DB URLs
+            logo_url: nhlLogos[row.nhl_team?.toUpperCase()] || "/images/nhl-logos/default.webp",
           }))
         );
       }
@@ -53,12 +49,32 @@ export default function ChampionsPage() {
       <PnplTable
         columns={[
           { key: "season", label: "Season" },
-          { key: "logo_url", label: "Team", type: "logo" },
+          {
+            key: "logo_url",
+            label: "Team",
+            render: (row) =>
+              row.logo_url ? (
+                <img
+  src={row.logo_url}
+  alt={row.nhl_team}
+  style={{
+    width: "36px",
+    height: "36px",
+    objectFit: "contain",
+    display: "block",
+    margin: "0 auto",
+  }}
+/>
+
+              ) : (
+                row.nhl_team
+              ),
+          },
           { key: "manager", label: "Manager" },
         ]}
         data={champions
           .sort((a, b) => b.season - a.season)
-          .map((row) => ({ ...row }))} // no champ key included
+          .map((row) => ({ ...row }))}
       />
     </Layout>
   );

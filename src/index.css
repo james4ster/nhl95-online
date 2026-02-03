@@ -137,3 +137,25 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+@keyframes icyPulse {
+  0% {
+    filter:
+      drop-shadow(0 0 14px rgba(0,255,255,0.45))
+      drop-shadow(0 0 28px rgba(0,255,255,0.25))
+      drop-shadow(0 0 50px rgba(0,255,255,0.15));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 24px rgba(0,255,255,0.75))
+      drop-shadow(0 0 46px rgba(0,255,255,0.4))
+      drop-shadow(0 0 80px rgba(0,255,255,0.25));
+  }
+  100% {
+    filter:
+      drop-shadow(0 0 14px rgba(0,255,255,0.45))
+      drop-shadow(0 0 28px rgba(0,255,255,0.25))
+      drop-shadow(0 0 50px rgba(0,255,255,0.15));
+  }
+}
+

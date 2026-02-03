@@ -13,6 +13,7 @@ export default function ManagersOverview() {
       setLoading(true);
 
       try {
+        // Fetch all managers
         const { data: managersData, error: managersError } = await supabase
           .from("managers")
           .select("id, name, discord_id, discord_avatar_url")
@@ -25,6 +26,7 @@ export default function ManagersOverview() {
           return;
         }
 
+        // Fetch titles count per manager
         const { data: standingsData, error: standingsError } = await supabase
           .from("pnpl_standings")
           .select("manager, champ");
@@ -100,11 +102,7 @@ export default function ManagersOverview() {
                 {/* Back */}
                 <div className="card-back">
                   <div className="back-content">
-                    <img
-                      src="/images/goldTrophy.png"
-                      alt="Trophy"
-                      className="trophy"
-                    />
+                    <img src="/images/goldTrophy.png" alt="Trophy" className="trophy" />
                     <div className="back-text">= {m.titles}</div>
                   </div>
                 </div>
@@ -146,7 +144,7 @@ export default function ManagersOverview() {
           transition: transform 0.6s;
         }
 
-        /* Front styling */
+        /* Front */
         .card-front {
           background: linear-gradient(145deg, #0E3C5F, #091421);
           color: #00FFFF;
@@ -164,15 +162,13 @@ export default function ManagersOverview() {
           border: 2px solid #00FFFF;
         }
 
-        /* Back styling */
+        /* Back */
         .card-back {
           background: #0E2A44;
           transform: rotateY(180deg);
           color: #FFD700;
           justify-content: center;
           align-items: center;
-          flex-direction: row;
-          gap: 6px;
         }
 
         .back-content {

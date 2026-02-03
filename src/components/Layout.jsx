@@ -66,7 +66,7 @@ export default function Layout({ children }) {
                 margin: 0,
               }}
             >
-              NHL95 Online
+              PNPL League
             </h1>
           </div>
         </div>
