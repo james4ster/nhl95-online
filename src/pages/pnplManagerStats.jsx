@@ -14,7 +14,7 @@ export default function ManagerStatsPage() {
   useEffect(() => {
     async function fetchManagerStats() {
       const { data, error } = await supabase
-        .from("pnpl_manager_stats")
+        .from("pnpl_manager_stats_vw")
         .select("*");
 
       if (!error && data?.length) {
@@ -66,6 +66,8 @@ export default function ManagerStatsPage() {
     { key: "gd", label: "GD" },
     { key: "gf_per_game", label: "GF/G" },
     { key: "ga_per_game", label: "GA/G" },
+    { key: "shutouts", label: "SO" },
+    { key: "champ_total", label: "Titles" }
   ];
 
   if (loading) {
@@ -160,11 +162,17 @@ export default function ManagerStatsPage() {
                 }
               >
                 {columns.map((col) => {
+                  let value = manager[col.key];
                   let cellColor = "#FFFFFF";
                   let fontWeight = col.bold ? "bold" : "normal";
 
                   if (col.key === "gd") {
                     cellColor = manager.gd >= 0 ? "#00FF00" : "#FF6B6B";
+                    fontWeight = "bold";
+                  }
+                  
+                  if (col.key === "champ_total" && value > 0) {
+                    value = `🏆 ${value}`;
                     fontWeight = "bold";
                   }
 
@@ -185,7 +193,7 @@ export default function ManagerStatsPage() {
                     >
                       {col.key === "pts_pct"
                         ? parseFloat(manager.pts_pct).toFixed(3)
-                        : manager[col.key]}
+                        : value}
                     </td>
                   );
                 })}
