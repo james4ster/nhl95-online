@@ -310,7 +310,7 @@ export default function HomePage() {
                 marginBottom: "12px",
               }}
             >
-              Top Managers
+              Current Standings
             </h2>
             <div style={{ flex: 1 }}>
               {topManagers.map((m, i) => (
