@@ -15,10 +15,10 @@ export default function Layout({ children }) {
         { name: "Team", path: "/team-stats" } 
       ],
     },
-    { name: "Records", path: "/records" },
+    //{ name: "Records", path: "/records" },
     { name: "Champions", path: "/champions" },
-    { name: "Managers", path: "/managers" },
-    { name: "More", path: "/more" },
+    { name: "Managers", path: "/managers" }
+   // { name: "More", path: "/more" },
   ];
 
   const handleMouseEnter = (idx) => {
