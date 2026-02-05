@@ -186,7 +186,7 @@ export default function HomePage() {
               textShadow: "0 0 10px #00FFFF, 0 0 20px #00FFFF",
             }}
           >
-            PNPL NHL95 League
+            PNPL League
           </h1>
         </div>
 

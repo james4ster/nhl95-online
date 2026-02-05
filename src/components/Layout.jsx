@@ -21,6 +21,8 @@ export default function Layout({ children }) {
    // { name: "More", path: "/more" },
   ];
 
+
+  
   const handleMouseEnter = (idx) => {
     if (submenuTimeoutRef.current) {
       clearTimeout(submenuTimeoutRef.current);
@@ -80,7 +82,7 @@ export default function Layout({ children }) {
                 margin: 0,
               }}
             >
-              PNPL League
+              NHL 95 Online
             </h1>
           </div>
         </div>
