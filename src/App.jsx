@@ -8,6 +8,8 @@ import ManagerStatsPage from "./pages/pnplManagerStats.jsx";
 import ManagersOverview from "./pages/pnplManagersOverview.jsx";
 import ManagerProfile from "./pages/pnplManagerProfile.jsx";
 import TeamStatsPage from "./pages/pnplNHLTeamStats";
+import PnplSchedule from "./pages/pnplSchedule.jsx";
+
 
 function App() {
   return (
@@ -18,6 +20,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/standings" element={<StandingsPage />} />
+        <Route path="/schedule" element={<PnplSchedule />} />
         <Route path="/champions" element={<ChampionsPage />} />
         <Route path="/manager-stats" element={<ManagerStatsPage />} />
         <Route path="/managers" element={<ManagersOverview />} />

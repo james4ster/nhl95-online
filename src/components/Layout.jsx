@@ -8,6 +8,8 @@ export default function Layout({ children }) {
   const menuItems = [
     { name: "Home", path: "/" },
     { name: "Standings", path: "/standings" },
+    { name: "Schedule", path: "/schedule" },
+    
     {
       name: "Stats",
       subMenu: [
