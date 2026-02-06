@@ -23,8 +23,10 @@ function App() {
         <Route path="/schedule" element={<PnplSchedule />} />
         <Route path="/champions" element={<ChampionsPage />} />
         <Route path="/manager-stats" element={<ManagerStatsPage />} />
-        <Route path="/managers" element={<ManagersOverview />} />
-        <Route path="/manager/:managerId" element={<ManagerProfile />} />
+        
+        <Route path="/manager" element={<ManagerProfile />} />
+<Route path="/manager/:managerId" element={<ManagerProfile />} />
+
         <Route path="/team-stats" element={<TeamStatsPage />} />
       </Routes>
     </Router>

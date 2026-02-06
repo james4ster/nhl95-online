@@ -9,26 +9,19 @@ export default function Layout({ children }) {
     { name: "Home", path: "/" },
     { name: "Standings", path: "/standings" },
     { name: "Schedule", path: "/schedule" },
-    
     {
       name: "Stats",
       subMenu: [
         { name: "Manager", path: "/manager-stats" },
-        { name: "Team", path: "/team-stats" } 
+        { name: "Team", path: "/team-stats" },
       ],
     },
-    //{ name: "Records", path: "/records" },
     { name: "Champions", path: "/champions" },
-    { name: "Managers", path: "/managers" }
-   // { name: "More", path: "/more" },
+    { name: "Managers", path: "/manager" }, // always active
   ];
 
-
-  
   const handleMouseEnter = (idx) => {
-    if (submenuTimeoutRef.current) {
-      clearTimeout(submenuTimeoutRef.current);
-    }
+    if (submenuTimeoutRef.current) clearTimeout(submenuTimeoutRef.current);
     setOpenSubmenu(idx);
   };
 
@@ -74,19 +67,17 @@ export default function Layout({ children }) {
               }}
             />
           </Link>
-          <div>
-            <h1
-              style={{
-                color: "#00FFFF",
-                fontSize: "2.5rem",
-                fontWeight: "bold",
-                textShadow: "0 0 12px #00FFFF",
-                margin: 0,
-              }}
-            >
-              NHL 95 Online
-            </h1>
-          </div>
+          <h1
+            style={{
+              color: "#00FFFF",
+              fontSize: "2.5rem",
+              fontWeight: "bold",
+              textShadow: "0 0 12px #00FFFF",
+              margin: 0,
+            }}
+          >
+            NHL 95 Online
+          </h1>
         </div>
       </header>
 
@@ -107,45 +98,29 @@ export default function Layout({ children }) {
             onMouseEnter={() => handleMouseEnter(idx)}
             onMouseLeave={handleMouseLeave}
           >
-            {item.path ? (
-              <Link
-                to={item.path}
-                style={{
-                  color: "#00FFFF",
-                  textDecoration: "none",
-                  fontWeight: "bold",
-                  fontSize: "1.1rem",
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 0 8px rgba(0,255,255,0.3)",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.boxShadow =
-                    "0 0 10px #00FFFF, 0 0 20px #00FFFF")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.boxShadow =
-                    "0 0 8px rgba(0,255,255,0.3)")
-                }
-              >
-                {item.name}
-              </Link>
-            ) : (
-              <span
-                style={{
-                  color: "#00FFFF",
-                  fontWeight: "bold",
-                  fontSize: "1.1rem",
-                  padding: "6px 12px",
-                  cursor: "pointer",
-                  borderRadius: "6px",
-                  boxShadow: "0 0 8px rgba(0,255,255,0.3)",
-                }}
-              >
-                {item.name}
-              </span>
-            )}
+            <Link
+              to={item.path}
+              style={{
+                color: "#00FFFF",
+                textDecoration: "none",
+                fontWeight: "bold",
+                fontSize: "1.1rem",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                transition: "all 0.3s ease",
+                boxShadow: "0 0 8px rgba(0,255,255,0.3)",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.boxShadow =
+                  "0 0 10px #00FFFF, 0 0 20px #00FFFF")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.boxShadow =
+                  "0 0 8px rgba(0,255,255,0.3)")
+              }
+            >
+              {item.name}
+            </Link>
 
             {/* Submenu */}
             {item.subMenu && openSubmenu === idx && (
@@ -174,8 +149,7 @@ export default function Layout({ children }) {
                       fontWeight: "bold",
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.background =
-                        "rgba(0,255,255,0.2)")
+                      (e.currentTarget.style.background = "rgba(0,255,255,0.2)")
                     }
                     onMouseLeave={(e) =>
                       (e.currentTarget.style.background = "transparent")
