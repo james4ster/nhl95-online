@@ -219,7 +219,7 @@ export default function ChampionsPage() {
             color: "#00FFFF",
             fontSize: "2.5rem",
             textAlign: "center",
-            marginBottom: "30px",
+            marginBottom: "50px",
             textShadow: "0 0 10px #00FFFF",
           }}
         >
