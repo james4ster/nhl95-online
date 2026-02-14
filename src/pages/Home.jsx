@@ -69,7 +69,7 @@ export default function HomePage() {
         .not("home_score", "is", null)
         .not("away_score", "is", null)
         .not("updated", "is", null)
-        .order("updated", { ascending: false })
+        .order("game_timestamp", { ascending: false })
         .limit(5);
 
       // Fetch manager avatars separately

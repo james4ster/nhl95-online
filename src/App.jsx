@@ -9,6 +9,7 @@ import ManagersOverview from "./pages/pnplManagersOverview.jsx";
 import ManagerProfile from "./pages/pnplManagerProfile.jsx";
 import TeamStatsPage from "./pages/pnplNHLTeamStats";
 import PnplSchedule from "./pages/pnplSchedule.jsx";
+import PnplAnalytics from "./pages/pnplAnalytics";
 
 
 function App() {
@@ -25,9 +26,9 @@ function App() {
         <Route path="/manager-stats" element={<ManagerStatsPage />} />
         
         <Route path="/manager" element={<ManagerProfile />} />
-<Route path="/manager/:managerId" element={<ManagerProfile />} />
-
+        <Route path="/manager/:managerId" element={<ManagerProfile />} />
         <Route path="/team-stats" element={<TeamStatsPage />} />
+        <Route path="analytics" element={<PnplAnalytics />} />
       </Routes>
     </Router>
   );

@@ -17,7 +17,9 @@ export default function Layout({ children }) {
       ],
     },
     { name: "Champions", path: "/champions" },
-    { name: "Managers", path: "/manager" }, // always active
+    { name: "Managers", path: "/manager" }, 
+    { name: "Analytics", path: "/analytics" },
+    
   ];
 
   const handleMouseEnter = (idx) => {
