@@ -51,13 +51,6 @@ export default function ChampionsPage() {
     fetchChampions();
   }, []);
 
-  const getMedalEmoji = (idx) => {
-    if (idx === 0) return "🥇";
-    if (idx === 1) return "🥈";
-    if (idx === 2) return "🥉";
-    return "🏅";
-  };
-
   return (
     <Layout>
       {/* Header */}
@@ -226,120 +219,120 @@ export default function ChampionsPage() {
           Championship Leaderboard
         </h2>
         
-       {/* Podium - Top 3 */}
-<div style={{ 
-  display: "flex", 
-  justifyContent: "center", 
-  alignItems: "flex-end", 
-  gap: "20px",
-  marginBottom: "40px",
-  flexWrap: "wrap",
-}}>
-  {/* 2nd Place */}
-  {managerStats[1] && (
-    <div style={{ 
-      textAlign: "center",
-      flex: "0 1 250px",
-    }}>
-      <div style={{ fontSize: "4rem", marginBottom: "10px" }}>🥈</div>
-      <div
-        style={{
-          background: "linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)",
-          borderRadius: "16px",
-          padding: "30px 20px",
-          border: "3px solid #C0C0C0",
-          boxShadow: "0 8px 32px rgba(192,192,192,0.5)",
-          minHeight: "180px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#000" }}>
-          {managerStats[1].manager}
-        </div>
-        <div>
-          <div style={{ fontSize: "3rem", fontWeight: "900", color: "#000", lineHeight: "1" }}>
-            {managerStats[1].titles}
-          </div>
-          <div style={{ fontSize: "0.95rem", color: "#333", fontWeight: "600", marginTop: "8px" }}>
-            {managerStats[1].titles === 1 ? "Championship" : "Championships"}
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
+        {/* Podium - Top 3 */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "flex-end", 
+          gap: "20px",
+          marginBottom: "40px",
+          flexWrap: "wrap",
+        }}>
+          {/* 2nd Place */}
+          {managerStats[1] && (
+            <div style={{ 
+              textAlign: "center",
+              flex: "0 1 250px",
+            }}>
+              <div style={{ fontSize: "4rem", marginBottom: "10px" }}>🥈</div>
+              <div
+                style={{
+                  background: "linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)",
+                  borderRadius: "16px",
+                  padding: "30px 20px",
+                  border: "3px solid #C0C0C0",
+                  boxShadow: "0 8px 32px rgba(192,192,192,0.5)",
+                  minHeight: "180px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#000" }}>
+                  {managerStats[1].manager}
+                </div>
+                <div>
+                  <div style={{ fontSize: "3rem", fontWeight: "900", color: "#000", lineHeight: "1" }}>
+                    {managerStats[1].titles}
+                  </div>
+                  <div style={{ fontSize: "0.95rem", color: "#333", fontWeight: "600", marginTop: "8px" }}>
+                    {managerStats[1].titles === 1 ? "Championship" : "Championships"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-  {/* 1st Place - Tallest */}
-  {managerStats[0] && (
-    <div style={{ 
-      textAlign: "center",
-      flex: "0 1 280px",
-    }}>
-      <div style={{ fontSize: "5rem", marginBottom: "10px" }}>🥇</div>
-      <div
-        style={{
-          background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
-          borderRadius: "16px",
-          padding: "40px 20px",
-          border: "3px solid #FFD700",
-          boxShadow: "0 12px 48px rgba(255,215,0,0.6)",
-          minHeight: "220px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ fontSize: "2.2rem", fontWeight: "bold", color: "#000" }}>
-          {managerStats[0].manager}
-        </div>
-        <div>
-          <div style={{ fontSize: "4rem", fontWeight: "900", color: "#000", lineHeight: "1" }}>
-            {managerStats[0].titles}
-          </div>
-          <div style={{ fontSize: "1.05rem", color: "#333", fontWeight: "600", marginTop: "10px" }}>
-            {managerStats[0].titles === 1 ? "Championship" : "Championships"}
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
+          {/* 1st Place - Tallest */}
+          {managerStats[0] && (
+            <div style={{ 
+              textAlign: "center",
+              flex: "0 1 280px",
+            }}>
+              <div style={{ fontSize: "5rem", marginBottom: "10px" }}>🥇</div>
+              <div
+                style={{
+                  background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
+                  borderRadius: "16px",
+                  padding: "40px 20px",
+                  border: "3px solid #FFD700",
+                  boxShadow: "0 12px 48px rgba(255,215,0,0.6)",
+                  minHeight: "220px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ fontSize: "2.2rem", fontWeight: "bold", color: "#000" }}>
+                  {managerStats[0].manager}
+                </div>
+                <div>
+                  <div style={{ fontSize: "4rem", fontWeight: "900", color: "#000", lineHeight: "1" }}>
+                    {managerStats[0].titles}
+                  </div>
+                  <div style={{ fontSize: "1.05rem", color: "#333", fontWeight: "600", marginTop: "10px" }}>
+                    {managerStats[0].titles === 1 ? "Championship" : "Championships"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-  {/* 3rd Place */}
-  {managerStats[2] && (
-    <div style={{ 
-      textAlign: "center",
-      flex: "0 1 250px",
-    }}>
-      <div style={{ fontSize: "4rem", marginBottom: "10px" }}>🥉</div>
-      <div
-        style={{
-          background: "linear-gradient(135deg, #CD7F32 0%, #B8733A 100%)",
-          borderRadius: "16px",
-          padding: "30px 20px",
-          border: "3px solid #CD7F32",
-          boxShadow: "0 8px 32px rgba(205,127,50,0.5)",
-          minHeight: "180px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#000" }}>
-          {managerStats[2].manager}
+          {/* 3rd Place */}
+          {managerStats[2] && (
+            <div style={{ 
+              textAlign: "center",
+              flex: "0 1 250px",
+            }}>
+              <div style={{ fontSize: "4rem", marginBottom: "10px" }}>🥉</div>
+              <div
+                style={{
+                  background: "linear-gradient(135deg, #CD7F32 0%, #B8733A 100%)",
+                  borderRadius: "16px",
+                  padding: "30px 20px",
+                  border: "3px solid #CD7F32",
+                  boxShadow: "0 8px 32px rgba(205,127,50,0.5)",
+                  minHeight: "180px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ fontSize: "1.8rem", fontWeight: "bold", color: "#000" }}>
+                  {managerStats[2].manager}
+                </div>
+                <div>
+                  <div style={{ fontSize: "3rem", fontWeight: "900", color: "#000", lineHeight: "1" }}>
+                    {managerStats[2].titles}
+                  </div>
+                  <div style={{ fontSize: "0.95rem", color: "#333", fontWeight: "600", marginTop: "8px" }}>
+                    {managerStats[2].titles === 1 ? "Championship" : "Championships"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-        <div>
-          <div style={{ fontSize: "3rem", fontWeight: "900", color: "#000", lineHeight: "1" }}>
-            {managerStats[2].titles}
-          </div>
-          <div style={{ fontSize: "0.95rem", color: "#333", fontWeight: "600", marginTop: "8px" }}>
-            {managerStats[2].titles === 1 ? "Championship" : "Championships"}
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
-</div>
 
         {/* Rest of Rankings - Table Style */}
         {managerStats.length > 3 && (
@@ -424,19 +417,53 @@ export default function ChampionsPage() {
             padding: "20px", 
             borderRadius: "12px", 
             border: "2px solid #00FFFF",
-            boxShadow: "0 4px 16px rgba(0,255,255,0.2)"
+            boxShadow: "0 4px 16px rgba(0,255,255,0.2)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "140px",
           }}>
-            <div style={{ fontSize: "2.5rem", color: "#00FFFF", fontWeight: "bold" }}>
-              {managerStats[0]?.manager || "N/A"}
-            </div>
-            <div style={{ color: "#888", marginTop: "8px", fontSize: "1rem" }}>Most Titles ({managerStats[0]?.titles || 0})</div>
+            {(() => {
+              const topTitles = managerStats[0]?.titles || 0;
+              const tied = managerStats.filter(m => m.titles === topTitles);
+              
+              if (tied.length > 1) {
+                return (
+                  <>
+                    <div style={{ fontSize: "1.8rem", color: "#00FFFF", fontWeight: "bold", lineHeight: "1.3" }}>
+                      {tied.map(m => m.manager).join(" & ")}
+                    </div>
+                    <div style={{ color: "#888", marginTop: "8px", fontSize: "1rem" }}>
+                      Tied - Most Titles ({topTitles})
+                    </div>
+                  </>
+                );
+              } else {
+                return (
+                  <>
+                    <div style={{ fontSize: "2.5rem", color: "#00FFFF", fontWeight: "bold" }}>
+                      {managerStats[0]?.manager || "N/A"}
+                    </div>
+                    <div style={{ color: "#888", marginTop: "8px", fontSize: "1rem" }}>
+                      Most Titles ({topTitles})
+                    </div>
+                  </>
+                );
+              }
+            })()}
           </div>
           <div style={{ 
             background: "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)", 
             padding: "20px", 
             borderRadius: "12px", 
             border: "2px solid #00FFFF",
-            boxShadow: "0 4px 16px rgba(0,255,255,0.2)"
+            boxShadow: "0 4px 16px rgba(0,255,255,0.2)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "140px",
           }}>
             <div style={{ fontSize: "2.5rem", color: "#00FFFF", fontWeight: "bold" }}>
               {champions[0]?.manager || "N/A"}
@@ -448,7 +475,12 @@ export default function ChampionsPage() {
             padding: "20px", 
             borderRadius: "12px", 
             border: "2px solid #00FFFF",
-            boxShadow: "0 4px 16px rgba(0,255,255,0.2)"
+            boxShadow: "0 4px 16px rgba(0,255,255,0.2)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "140px",
           }}>
             <div style={{ fontSize: "2.5rem", color: "#00FFFF", fontWeight: "bold" }}>
               {new Set(champions.map(c => c.manager)).size}
