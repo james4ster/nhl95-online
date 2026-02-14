@@ -152,20 +152,9 @@ export default function HomePage() {
           gap: "30px",
         }}
       >
-        <style>{`
-          @keyframes pulseGlow {
-            0%, 100% { 
-              filter: drop-shadow(0 0 14px rgba(0,255,255,0.45))
-                      drop-shadow(0 0 28px rgba(0,255,255,0.25))
-                      drop-shadow(0 0 50px rgba(0,255,255,0.15));
-            }
-            50% { 
-              filter: drop-shadow(0 0 20px rgba(0,255,255,0.65))
-                      drop-shadow(0 0 40px rgba(0,255,255,0.45))
-                      drop-shadow(0 0 70px rgba(0,255,255,0.25));
-            }
-          }
-        `}</style>
+
+
+
 
         {/* Hero Section */}
         <div style={{ textAlign: "center" }}>
@@ -176,7 +165,7 @@ export default function HomePage() {
               width: "220px",
               height: "220px",
               objectFit: "contain",
-              animation: "pulseGlow 2.6s ease-in-out infinite",
+              animation: "pulseGlowLogo 2.6s ease-in-out infinite",
             }}
           />
           <h1
