@@ -214,7 +214,7 @@ export function HomeAwayModal({ widget, rows, onClose }) {
 
   const tabs = [
     { id: "record", label: "W/L/T", icon: "🏆" },
-    { id: "goals", label: "Goals", icon: "⚽" },
+    { id: "goals", label: "Goals", icon: "🏒" },
     { id: "other", label: "Stats", icon: "📊" },
   ];
 
