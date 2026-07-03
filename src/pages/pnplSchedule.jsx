@@ -507,7 +507,9 @@ export default function PnplSchedule() {
 
       <div style={{ flex: "1 1 100px" }}>
         <div style={{ fontSize: "0.95rem", opacity: 0.6 }}>Pts%</div>
-        <div style={{ fontSize: "1.3rem", fontWeight: "600" }}>{seasonStats.pts_percent.toFixed(3)}</div>
+        <div style={{ fontSize: "1.3rem", fontWeight: "600" }}>
+  {seasonStats.pts_percent != null ? seasonStats.pts_percent.toFixed(3) : "—"}
+      </div>
       </div>
 
       <div style={{ flex: "1 1 100px" }}>
