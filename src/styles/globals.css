@@ -277,7 +277,61 @@
      }
    }
    
-   /* ---------- Theme toggle ---------- */
+   /* ---------- Header actions ---------- */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ---------- Discord ---------- */
+
+.discord-link {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  text-decoration: none;
+  border-radius: 10px;
+  background: transparent;
+  transition:
+    color 0.2s var(--ease),
+    background 0.2s var(--ease),
+    filter 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+
+.discord-icon {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 0 5px rgba(88, 101, 242, 0.25));
+  transition:
+    filter 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+
+.discord-link:hover {
+  color: #5865F2;
+  background: rgba(88, 101, 242, 0.10);
+  transform: translateY(-1px);
+}
+
+.discord-link:hover .discord-icon {
+  filter:
+    drop-shadow(0 0 5px rgba(88, 101, 242, 0.65))
+    drop-shadow(0 0 12px rgba(88, 101, 242, 0.35));
+  transform: scale(1.08);
+}
+
+.discord-link:active {
+  transform: translateY(0) scale(0.94);
+}
+
+/* ---------- Theme toggle ---------- */
    
    .theme-toggle {
      background: none;
@@ -640,3 +694,349 @@
      flex-direction: column;
      gap: 8px;
    }
+
+
+
+/* ---------- Standings page ---------- */
+
+.standings-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+
+.season-select {
+  padding: 10px 16px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.view-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.view-tab {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--surface-alt);
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.view-tab:hover {
+  color: var(--text);
+}
+
+.view-tab.is-active {
+  background: var(--accent-wash);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.standings-table-panel {
+  padding: 18px;
+  overflow-x: auto;
+}
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.standings-table th {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 10px 8px;
+  border-bottom: 2px solid var(--border-strong);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.standings-table th:hover {
+  color: var(--text);
+}
+
+.standings-table th.is-sorted {
+  color: var(--accent);
+}
+
+.standings-table td {
+  text-align: center;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.standings-table tbody tr:hover {
+  background: var(--surface-alt);
+}
+
+.standings-manager {
+  text-align: left;
+  font-weight: 600;
+}
+
+.standings-pts {
+  font-weight: 700;
+  color: var(--gold);
+}
+
+@media (max-width: 760px) {
+  .standings-table th.col-extra,
+  .standings-table td.col-extra {
+    display: none;
+  }
+  .standings-table {
+    font-size: 0.82rem;
+  }
+}
+
+/* ---------- Playoffs ---------- */
+
+.playoff-wrap {
+  overflow-x: visible;
+  padding-bottom: 12px;
+}
+
+.playoff-bracket {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.playoff-round {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.playoff-round-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  text-align: center;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent-wash);
+}
+
+.playoff-series-card {
+  height: 280px;
+  box-sizing: border-box;
+  padding: 16px;
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.playoff-series-card:hover {
+  transform: translateY(-2px);
+}
+
+.playoff-series-card.is-complete {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-card), 0 0 0 1px var(--accent-wash);
+}
+
+.playoff-matchup {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.playoff-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 4px;
+  border-radius: var(--radius-sm);
+  opacity: 0.75;
+}
+
+.playoff-side.is-winner {
+  opacity: 1;
+  background: var(--accent-wash);
+}
+
+.playoff-seed {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+
+.playoff-manager {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.playoff-side.is-winner .playoff-manager {
+  color: var(--accent);
+}
+
+.playoff-vs {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--gold);
+  transform: rotate(-8deg);
+  flex-shrink: 0;
+}
+
+.playoff-games {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.game-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+}
+
+.game-chip-num {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--text-faint);
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.game-chip-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+
+.gc-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  opacity: 0.4;
+  filter: grayscale(60%);
+  transition: opacity 0.15s var(--ease), filter 0.15s var(--ease);
+}
+
+.gc-logo.is-win {
+  opacity: 1;
+  filter: none;
+}
+
+.gc-score {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.gc-score.is-win {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.game-chip-at {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+/* ---------- Champion ---------- */
+
+.champion-column {
+  justify-content: center;
+}
+
+.champion-round-title {
+  color: var(--gold);
+  border-bottom-color: rgba(242, 183, 5, 0.25);
+}
+
+.champion-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 20px;
+  background: radial-gradient(ellipse at top, rgba(242, 183, 5, 0.16), var(--surface) 70%);
+  border-color: rgba(242, 183, 5, 0.4);
+  animation: champion-glow 2.4s ease-in-out infinite;
+}
+
+.champion-trophy {
+  font-size: 2.4rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.champion-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--gold);
+  margin-top: 6px;
+  text-align: center;
+}
+
+.champion-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+@keyframes champion-glow {
+  0%, 100% { box-shadow: var(--shadow-card), 0 0 0 1px rgba(242, 183, 5, 0.25); }
+  50% { box-shadow: var(--shadow-card), 0 0 24px 2px rgba(242, 183, 5, 0.35); }
+}
+
+@media (max-width: 760px) {
+  .playoff-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .playoff-bracket {
+    min-width: max-content;
+  }
+  .playoff-round {
+    flex: 0 0 210px;
+    min-width: 210px;
+  }
+}
