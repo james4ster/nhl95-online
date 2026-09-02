@@ -143,19 +143,19 @@ export default function HomePage() {
                 <TeamBadge team={m.nhl_team} size="lg" />
                 <span className="home-standings-name">{m.manager}</span>
                 <div className="home-standings-record">
-                <div className="home-standings-record-item">
+                <div className="home-standings-record-item is-gp">
                     <span className="home-standings-record-value">{m.gp}</span>
                     <span className="home-standings-record-label">GP</span>
                   </div>
-                  <div className="home-standings-record-item">
+                  <div className="home-standings-record-item is-w">
                     <span className="home-standings-record-value">{m.w}</span>
                     <span className="home-standings-record-label">W</span>
                   </div>
-                  <div className="home-standings-record-item">
+                  <div className="home-standings-record-item is-l">
                     <span className="home-standings-record-value">{m.l}</span>
                     <span className="home-standings-record-label">L</span>
                   </div>
-                  <div className="home-standings-record-item">
+                  <div className="home-standings-record-item is-t">
                     <span className="home-standings-record-value">{m.t}</span>
                     <span className="home-standings-record-label">T</span>
                   </div>

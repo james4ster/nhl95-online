@@ -1,7 +1,7 @@
 import React from "react";
 import { nhlLogos, defaultTeamLogo } from "../constants/nhlLogos";
 
-const SIZES = { sm: 22, md: 28, lg: 40, xl: 56 };
+const SIZES = { sm: 22, md: 28, lg: 40, xl: 64 };
 
 export default function TeamBadge({ team, size = "md" }) {
   const px = SIZES[size] || size;

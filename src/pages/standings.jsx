@@ -383,7 +383,7 @@ export default function StandingsPage() {
                   <div className="playoff-round-title champion-round-title">Champion</div>
                   <div className="panel champion-panel">
                     <div className="champion-trophy">🏆</div>
-                    <TeamBadge team={championStanding.nhl_team} size="lg" />
+                    <TeamBadge team={championStanding.nhl_team} size="xl" />
                     <div className="champion-name">{championStanding.manager}</div>
                   </div>
                 </div>
