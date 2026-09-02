@@ -1,0 +1,642 @@
+/* ==========================================================================
+   PNPL League — design tokens
+
+   Identity: a broadcast scoreboard on a frozen rink. Condensed display type
+   (Teko) carries scores and headings; a clean sans (Inter) carries body
+   copy. Ice blue is the one accent that does everyday work; gold is saved
+   for standings leaders and championships so it still means something.
+   ========================================================================== */
+
+   @import url("https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+
+   :root {
+     color-scheme: dark;
+   
+     --bg: #0a1522;
+     --surface: #122a3d;
+     --surface-alt: #0d2233;
+     --border: rgba(150, 205, 235, 0.16);
+     --border-strong: rgba(150, 205, 235, 0.32);
+   
+     --text: #eaf4fb;
+     --text-dim: #93aec2;
+     --text-faint: #62839a;
+   
+     --accent: #3fc6ff;
+     --accent-wash: rgba(63, 198, 255, 0.12);
+   
+     --gold: #f2b705;
+   
+     --radius-sm: 8px;
+     --radius-md: 14px;
+     --radius-lg: 20px;
+     --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.35);
+     --ease: cubic-bezier(0.22, 1, 0.36, 1);
+   
+     --font-display: "Teko", "Arial Narrow", sans-serif;
+     --font-body: "Inter", system-ui, -apple-system, sans-serif;
+   
+     --header-h: 60px;
+     --tabbar-h: 62px;
+   }
+   
+   [data-theme="light"] {
+     color-scheme: light;
+   
+     --bg: #eef4f9;
+     --surface: #ffffff;
+     --surface-alt: #e3edf5;
+     --border: rgba(11, 32, 50, 0.1);
+     --border-strong: rgba(11, 32, 50, 0.22);
+   
+     --text: #0c2334;
+     --text-dim: #4d6478;
+     --text-faint: #7891a3;
+   
+     --accent: #0891b2;
+     --accent-wash: rgba(8, 145, 178, 0.08);
+   
+     --gold: #b8860b;
+   
+     --shadow-card: 0 6px 18px rgba(12, 35, 52, 0.1);
+   }
+   
+   * {
+     box-sizing: border-box;
+   }
+   
+   html,
+   body,
+   #root {
+     margin: 0;
+     padding: 0;
+     width: 100%;
+     min-height: 100%;
+     background-color: var(--bg);
+   }
+   
+   body {
+     font-family: var(--font-body);
+     color: var(--text);
+     transition: background-color 0.25s var(--ease), color 0.25s var(--ease);
+     -webkit-font-smoothing: antialiased;
+   }
+   
+   #root {
+     display: flex;
+     flex-direction: column;
+     min-height: 100vh;
+   }
+   
+   h1,
+   h2,
+   h3 {
+     font-family: var(--font-display);
+     font-weight: 600;
+     letter-spacing: 0.01em;
+     line-height: 1.05;
+     color: var(--text);
+     margin: 0;
+   }
+   
+   a {
+     color: var(--accent);
+   }
+   
+   button {
+     font-family: inherit;
+   }
+   
+   :focus-visible {
+     outline: 2px solid var(--accent);
+     outline-offset: 2px;
+     border-radius: 4px;
+   }
+   
+   @media (prefers-reduced-motion: reduce) {
+     *,
+     *::before,
+     *::after {
+       animation-duration: 0.001ms !important;
+       transition-duration: 0.001ms !important;
+     }
+   }
+   
+   .panel {
+     background: var(--surface);
+     border: 1px solid var(--border);
+     border-radius: var(--radius-lg);
+     box-shadow: var(--shadow-card);
+   }
+   /* ==========================================================================
+      PNPL League — app.css
+      Everything below theme.css: layout chrome, page-level layout, and the
+      handful of small shared UI bits (team badge, countdown, game row).
+      ========================================================================== */
+   
+   .page {
+     width: 100%;
+     max-width: 1080px;
+     margin: 0 auto;
+     padding: 20px 16px calc(var(--tabbar-h) + 28px);
+   }
+   
+   @media (min-width: 768px) {
+     .page {
+       padding: 32px 24px 40px;
+     }
+   }
+   
+   .page-title {
+     font-size: 2.6rem;
+     text-align: center;
+     margin-bottom: 20px;
+   }
+   
+   /* ---------- App shell / header / nav ---------- */
+   
+   .app-shell {
+     display: flex;
+     flex-direction: column;
+     min-height: 100vh;
+     background: var(--bg);
+   }
+   
+   .app-header {
+     height: var(--header-h);
+     flex-shrink: 0;
+     display: flex;
+     align-items: center;
+     gap: 20px;
+     padding: 0 16px;
+     background: var(--surface);
+     border-bottom: 1px solid var(--border);
+     position: sticky;
+     top: 0;
+     z-index: 20;
+   }
+   
+   .brand {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     text-decoration: none;
+     flex-shrink: 0;
+   }
+   
+   .brand-mark {
+     width: 32px;
+     height: 32px;
+     object-fit: contain;
+     border-radius: 6px;
+   }
+   
+   .brand-name {
+     font-family: var(--font-display);
+     font-size: 1.5rem;
+     color: var(--text);
+     letter-spacing: 0.02em;
+   }
+   
+   .desktop-nav {
+     display: none;
+     gap: 4px;
+     flex: 1;
+   }
+   
+   .desktop-nav-link {
+     padding: 8px 14px;
+     border-radius: var(--radius-sm);
+     color: var(--text-dim);
+     text-decoration: none;
+     font-size: 0.95rem;
+     font-weight: 500;
+     transition: background 0.15s var(--ease), color 0.15s var(--ease);
+   }
+   
+   .desktop-nav-link:hover {
+     color: var(--text);
+     background: var(--surface-alt);
+   }
+   
+   .desktop-nav-link.is-active {
+     color: var(--accent);
+     background: var(--accent-wash);
+   }
+   
+   .app-main {
+     flex: 1;
+     display: flex;
+     flex-direction: column;
+   }
+   
+   .mobile-tabbar {
+     position: fixed;
+     bottom: 0;
+     left: 0;
+     right: 0;
+     height: var(--tabbar-h);
+     display: flex;
+     background: var(--surface);
+     border-top: 1px solid var(--border);
+     padding-bottom: env(safe-area-inset-bottom);
+     z-index: 30;
+   }
+   
+   .tabbar-link {
+     flex: 1;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     gap: 2px;
+     text-decoration: none;
+     color: var(--text-faint);
+     font-size: 0.68rem;
+     font-weight: 500;
+   }
+   
+   .tabbar-icon {
+     font-size: 1.15rem;
+     line-height: 1;
+   }
+   
+   .tabbar-link.is-active {
+     color: var(--accent);
+   }
+   
+   @media (min-width: 900px) {
+     .desktop-nav {
+       display: flex;
+     }
+     .mobile-tabbar {
+       display: none;
+     }
+     .page {
+       padding-bottom: 40px; /* no reserved space for the tab bar on desktop */
+     }
+   }
+   
+   /* ---------- Theme toggle ---------- */
+   
+   .theme-toggle {
+     background: none;
+     border: none;
+     padding: 0;
+     cursor: pointer;
+     flex-shrink: 0;
+   }
+   
+   .theme-toggle-track {
+     display: flex;
+     align-items: center;
+     width: 46px;
+     height: 26px;
+     border-radius: 999px;
+     background: var(--surface-alt);
+     border: 1px solid var(--border-strong);
+     padding: 2px;
+   }
+   
+   .theme-toggle-thumb {
+     width: 20px;
+     height: 20px;
+     border-radius: 50%;
+     background: var(--surface);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 12px;
+     box-shadow: var(--shadow-card);
+     transform: translateX(0);
+     transition: transform 0.2s var(--ease);
+   }
+   
+   [data-theme="light"] .theme-toggle-thumb {
+     transform: translateX(20px);
+   }
+   
+   /* ---------- Shared bits: team badge, countdown, game row ---------- */
+   
+   .team-badge {
+     object-fit: contain;
+     flex-shrink: 0;
+   }
+   
+   /* Bigger badges where there's room — at least as large as the discord
+      avatars they sit next to. If TeamBadge sets width/height inline via its
+      size prop, that will override these; bump the size prop instead. */
+   .home-standings-row .team-badge {
+     width: 40px;
+     height: 40px;
+   }
+   
+   .game-row .team-badge {
+     width: 32px;
+     height: 32px;
+   }
+   
+   /* Thin scoreboard strip — full width, sits above the panel grid rather than
+      inside a panel, so it reads as a ticker rather than a boxy widget. */
+   .countdown-banner {
+     display: flex;
+     align-items: center;
+     gap: 16px;
+     flex-shrink: 0;
+     white-space: nowrap;
+   }
+   
+   .countdown-banner-label {
+     font-family: var(--font-display);
+     font-size: 1.3rem;
+     color: var(--text-dim);
+     letter-spacing: 0.02em;
+   }
+   
+   .countdown-banner-time {
+     display: flex;
+     gap: 8px;
+   }
+   
+   /* Label-over-value per segment. flex column-reverse flips whatever the
+      last DOM child is (the unit <small>) up on top of the number. */
+   .countdown-banner-segment {
+     display: flex;
+     flex-direction: column-reverse;
+     align-items: center;
+     gap: 2px;
+     font-family: var(--font-display);
+     font-size: 2rem;
+     font-variant-numeric: tabular-nums; /* keeps digit width consistent as numbers change */
+     color: var(--accent);
+     background: var(--accent-wash);
+     border-radius: var(--radius-sm);
+     padding: 4px 14px;
+     line-height: 1;
+     min-width: 60px; /* fixed footprint so the box doesn't resize on tick */
+     justify-content: center;
+   }
+   
+   .countdown-banner-segment small {
+     font-size: 0.7rem;
+     font-weight: 600;
+     letter-spacing: 0.05em;
+     color: var(--text-faint);
+     text-transform: uppercase;
+     margin-left: 0;
+   }
+   
+   .game-row {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     padding: 8px 10px;
+     min-height: 56px; /* shared with .home-standings-row so both lists line up */
+     border-radius: var(--radius-sm);
+     background: var(--surface-alt);
+   }
+   
+   .game-row-avatar {
+     width: 28px;
+     height: 28px;
+     border-radius: 50%;
+     object-fit: cover;
+     flex-shrink: 0;
+   }
+   
+   .game-row-center {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     flex: 1;
+     justify-content: center;
+   }
+   
+   .game-row-score {
+     font-family: var(--font-display);
+     font-size: 1.3rem;
+     min-width: 22px;
+     text-align: center;
+   }
+   
+   .game-row-dash {
+     font-size: 0.7rem;
+     color: var(--text-faint);
+     padding: 0 2px;
+   }
+   
+   /* ---------- Home page ---------- */
+   
+   .home-hero {
+     text-align: center;
+     margin-bottom: 28px;
+   }
+   
+   .home-hero-logo {
+     width: 96px;
+     height: 96px;
+     object-fit: contain;
+     border-radius: 16px;
+   }
+   
+   .home-hero-title {
+     font-size: 2.6rem;
+     margin-top: 8px;
+     color: var(--accent);
+   }
+   
+   @media (min-width: 768px) {
+     .home-hero-logo {
+       width: 140px;
+       height: 140px;
+     }
+     .home-hero-title {
+       font-size: 3.6rem;
+     }
+   }
+   
+   .home-grid {
+     display: grid;
+     grid-template-columns: 1fr;
+     gap: 16px;
+     align-items: stretch; /* was start — this is why the two panels didn't match height */
+   }
+   
+   @media (min-width: 900px) {
+     .home-grid {
+       grid-template-columns: 3fr 2fr;
+     }
+   }
+   
+   .home-panel {
+     padding: 18px;
+   }
+   
+   .home-panel-narrow {
+     min-width: 0; /* allow the narrower column to shrink below its content's natural width */
+   }
+   
+   /* ---------- Season banner (stats + countdown, one strip) ---------- */
+   
+   .season-banner {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     gap: 24px;
+     padding: 8px 28px;
+     margin-bottom: 20px;
+     border-image: none;
+     box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+     border-bottom: 2px solid var(--accent-wash);
+   }
+   
+   .season-banner-stats {
+     display: flex;
+     gap: 48px;
+     flex: 1;
+     justify-content: space-between;
+   }
+   
+   .season-banner-divider {
+     width: 1px;
+     height: 34px;
+     background: var(--border-strong);
+     flex-shrink: 0;
+   }
+   
+   @media (max-width: 760px) {
+     .season-banner {
+       padding: 8px 14px;
+       gap: 14px;
+     }
+     .season-banner-stats {
+       gap: 20px;
+     }
+     .stat-highlight-value {
+       font-size: 2.2rem;
+     }
+     .countdown-banner-segment {
+       font-size: 1.4rem;
+       padding: 3px 8px;
+     }
+     .countdown-banner-label {
+       display: none; /* segment labels already carry the meaning at this width */
+     }
+   }
+   
+   .home-panel-title {
+     font-size: 1.4rem;
+     text-align: center;
+     color: var(--accent);
+     margin-bottom: 14px;
+   }
+   
+   .home-highlights {
+     display: flex;
+     justify-content: space-between;
+     gap: 8px;
+   }
+   
+   /* Label above value, both sized up. flex column-reverse flips the DOM
+      order (value div, then label div) so the label renders on top. */
+   .stat-highlight {
+     display: flex;
+     flex-direction: column-reverse;
+     align-items: center;
+     gap: 2px;
+     text-align: center;
+   }
+   
+   .stat-highlight-value {
+     font-family: var(--font-display);
+     font-size: 3.1rem;
+     line-height: 1;
+   }
+   
+   .stat-highlight-label {
+     font-size: 1rem;
+     font-weight: 600;
+     color: var(--text-dim);
+     letter-spacing: 0.03em;
+     text-transform: uppercase;
+     margin-top: 0;
+   }
+   
+   .home-standings-list {
+     display: flex;
+     flex-direction: column;
+     gap: 8px;
+   }
+   
+   .home-standings-row {
+     display: flex;
+     align-items: center;
+     gap: 12px;
+     padding: 8px 12px;
+     min-height: 56px; /* shared with .game-row so both lists line up */
+     border-radius: var(--radius-sm);
+     background: var(--surface-alt);
+   }
+   
+   .home-standings-rank {
+     font-family: var(--font-display);
+     font-size: 1.1rem;
+     color: var(--text-faint);
+     width: 18px;
+   }
+   
+   .home-standings-name {
+     flex: 1;
+     font-weight: 600;
+     overflow: hidden;
+     text-overflow: ellipsis;
+     white-space: nowrap;
+   }
+   
+   /* W / L / T columns, spread evenly, sitting ahead of points */
+   .home-standings-record {
+     display: flex;
+     gap: 20px;
+     flex-shrink: 0;
+   }
+   
+   .home-standings-record-item {
+     display: flex;
+     flex-direction: column-reverse;
+     align-items: center;
+     min-width: 20px;
+   }
+   
+   .home-standings-record-value {
+     font-family: var(--font-display);
+     font-size: 1.15rem;
+     color: var(--text);
+   }
+   
+   .home-standings-record-label {
+     font-size: 0.65rem;
+     color: var(--text-faint);
+     letter-spacing: 0.04em;
+     text-transform: uppercase;
+   }
+   
+   .home-standings-pts {
+     font-family: var(--font-display);
+     font-size: 1.15rem;
+     color: var(--gold);
+   }
+   
+   .home-view-all {
+     display: block;
+     text-align: right;
+     margin-top: 12px;
+     font-size: 0.85rem;
+     color: var(--accent);
+     text-decoration: none;
+   }
+   
+   .home-games-list {
+     display: flex;
+     flex-direction: column;
+     gap: 8px;
+   }
