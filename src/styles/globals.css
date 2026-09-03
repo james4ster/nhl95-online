@@ -27,6 +27,9 @@
    
      --gold: #f2b705;
    
+     --win: #3ddc84;
+     --loss: #ff6161;
+   
      --radius-sm: 8px;
      --radius-md: 14px;
      --radius-lg: 20px;
@@ -57,6 +60,9 @@
      --accent-wash: rgba(8, 145, 178, 0.08);
    
      --gold: #b8860b;
+   
+     --win: #12a150;
+     --loss: #d64545;
    
      --shadow-card: 0 6px 18px rgba(12, 35, 52, 0.1);
    }
@@ -1104,4 +1110,659 @@
     flex: 0 0 210px;
     min-width: 210px;
   }
+}
+
+/* ---------- Schedule page ---------- */
+
+.schedule-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.schedule-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+}
+
+.schedule-control-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.manager-select {
+  position: relative;
+}
+
+.manager-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.manager-select-trigger:hover {
+  border-color: var(--accent);
+}
+
+.manager-select-trigger-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manager-select-caret {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--text-faint);
+  flex-shrink: 0;
+  transition: transform 0.15s var(--ease);
+}
+
+.manager-select.is-open .manager-select-caret {
+  transform: rotate(180deg);
+}
+
+.manager-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 15;
+  max-height: 280px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.manager-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.manager-select-option:hover,
+.manager-select-option.is-active {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+.manager-select-trigger .team-badge,
+.manager-select-option .team-badge {
+  width: 26px;
+  height: 26px;
+}
+
+/* ---- Season stats strip ---- */
+
+.schedule-stats-panel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 24px;
+  margin-bottom: 24px;
+}
+
+.schedule-stats-empty {
+  width: 100%;
+  text-align: center;
+  color: var(--text-faint);
+  padding: 8px 0;
+}
+
+.schedule-stat {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2px;
+  flex: 1 1 80px;
+  text-align: center;
+}
+
+.schedule-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  color: var(--text);
+}
+
+.schedule-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ---- Section headers ---- */
+
+.schedule-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  margin: 28px 4px 12px;
+}
+
+.schedule-section-title .icon {
+  font-size: 1.2rem;
+}
+
+.schedule-section-title.is-complete {
+  color: var(--gold);
+}
+
+/* ---- Opponent cards ---- */
+
+.schedule-opponent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.schedule-opponent-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  flex-wrap: wrap;
+}
+
+.schedule-opponent-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.schedule-opponent-info .team-badge {
+  width: 36px;
+  height: 36px;
+}
+
+.schedule-opponent-names {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-opponent-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-opponent-manager {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 1 150px; /* content-sized, not stretched — freed-up space goes to the h2h block */
+}
+
+.schedule-result-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.schedule-result-row .team-badge {
+  width: 22px;
+  height: 22px;
+}
+
+.schedule-result-row.is-win {
+  color: var(--win);
+  font-weight: 700;
+}
+
+.schedule-result-row.is-loss {
+  color: var(--loss);
+  font-weight: 700;
+}
+
+.schedule-result-row.is-tie {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.schedule-result-dash {
+  color: var(--text-faint);
+  font-size: 0.8rem;
+}
+
+.schedule-no-games {
+  color: var(--text-faint);
+  font-size: 0.9rem;
+}
+
+.schedule-h2h {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: 18px;
+  border-left: 2px solid var(--border);
+  flex: 2 1 240px; /* grows to absorb the space the empty results column leaves behind */
+}
+
+.schedule-h2h-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+
+.schedule-h2h-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-h2h-main {
+  min-width: 0;
+}
+
+.schedule-h2h-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.schedule-h2h-record {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--text);
+}
+
+.schedule-h2h-detail {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+/* One header labeling the columns, shown once per section instead of
+   repeating "All-Time H2H" on every card. Flex-basis matches the card
+   columns below so the labels line up. */
+.schedule-list-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 18px 6px;
+}
+
+.schedule-list-header-col {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.schedule-list-header-info {
+  flex: 1 1 140px;
+}
+
+.schedule-list-header-results {
+  flex: 0 1 150px;
+}
+
+.schedule-list-header-h2h {
+  flex: 2 1 240px;
+  padding-left: 18px;
+  border-left: 2px solid transparent; /* keeps it aligned with the card's bordered h2h column */
+}
+
+@media (max-width: 760px) {
+  .schedule-list-header {
+    display: none; /* cards stack into their own labeled sections on mobile instead */
+  }
+}
+
+@media (max-width: 760px) {
+  .schedule-opponent-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .schedule-opponent-info,
+  .schedule-results,
+  .schedule-h2h {
+    flex: 0 1 auto; /* stop stretching to fill the column's cross axis — was causing the big empty gap */
+  }
+  .schedule-h2h {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    flex-wrap: wrap;
+  }
+  .schedule-stats-panel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px 8px;
+    padding: 14px 16px;
+  }
+  .schedule-stat {
+    flex: none;
+  }
+  .schedule-stat-value {
+    font-size: 1.4rem;
+  }
+  .schedule-controls {
+    padding: 14px 12px;
+    gap: 14px;
+  }
+  .schedule-control {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+}
+
+
+
+
+/* ---------- Champions page ---------- */
+
+.champions-intro {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 4px;
+  padding: 24px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.champions-count {
+  font-family: var(--font-display);
+  font-size: 3.4rem;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.champions-count-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.section-heading {
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  margin: 8px 4px 14px;
+}
+
+/* ---- Timeline ---- */
+
+.champ-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+
+.champ-timeline-card {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 24px;
+}
+
+.champ-timeline-card.is-latest {
+  border-color: rgba(242, 183, 5, 0.45);
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(242, 183, 5, 0.3), 0 0 24px rgba(242, 183, 5, 0.12);
+}
+
+.champ-season-num {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.champ-timeline-card.is-latest .champ-season-num {
+  color: var(--gold);
+}
+
+.champ-timeline-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.champ-timeline-main .team-badge {
+  width: 52px;
+  height: 52px;
+}
+
+.champ-manager {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.champ-latest-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(242, 183, 5, 0.14);
+  padding: 6px 12px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.champ-latest-icon {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .champ-timeline-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+  .champ-season-num {
+    font-size: 1.5rem;
+  }
+  .champ-manager {
+    font-size: 1.35rem;
+  }
+}
+
+/* ---- Leaderboard ---- */
+
+.champ-leaders-panel {
+  padding: 8px 24px;
+  margin-bottom: 36px;
+}
+
+.champ-leader-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.champ-leader-row:last-child {
+  border-bottom: none;
+}
+
+.champ-leader-rank {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--text-faint);
+  min-width: 36px;
+  flex-shrink: 0;
+}
+
+.champ-leader-row.is-leader .champ-leader-rank {
+  color: var(--gold);
+}
+
+.champ-leader-manager {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.champ-leader-seasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 2 1 220px;
+}
+
+.champ-season-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.champ-season-chip .team-badge {
+  width: 24px;
+  height: 24px;
+}
+
+.champ-season-chip-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+.champ-leader-titles {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--text);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.champ-leader-row.is-leader .champ-leader-titles {
+  color: var(--gold);
+}
+
+.champ-leader-titles-label {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+@media (max-width: 760px) {
+  .champ-leader-row {
+    gap: 12px;
+  }
+  .champ-leader-titles {
+    margin-left: 0;
+  }
+}
+
+/* ---- Facts ---- */
+
+.champ-facts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.champ-fact-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px 16px;
+  min-height: 120px;
+  text-align: center;
+}
+
+.champ-fact-value {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  color: var(--accent);
+  line-height: 1.15;
+}
+
+.champ-fact-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
