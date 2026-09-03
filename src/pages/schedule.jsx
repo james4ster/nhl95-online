@@ -8,7 +8,11 @@ export default function SchedulePage() {
   const managerDropdownRef = useRef(null);
 
   const [seasons, setSeasons] = useState([]);
-  const [selectedSeason, setSelectedSeason] = useState(null);
+  //const [selectedSeason, setSelectedSeason] = useState(null);
+
+  const [selectedSeason, setSelectedSeason] = useState(
+    () => localStorage.getItem("selectedSeason") || ""
+  );
 
   const [teams, setTeams] = useState([]);
   const [teamToManager, setTeamToManager] = useState({});
@@ -16,7 +20,10 @@ export default function SchedulePage() {
   const [managerAvatars, setManagerAvatars] = useState({});
 
   const [selectedTeam, setSelectedTeam] = useState("");
-  const [selectedManager, setSelectedManager] = useState("");
+  //const [selectedManager, setSelectedManager] = useState("");
+  const [selectedManager, setSelectedManager] = useState(
+    () => localStorage.getItem("selectedManager") || ""
+  );
   const [games, setGames] = useState([]);
 
   const [upcomingGames, setUpcomingGames] = useState([]);
@@ -46,11 +53,20 @@ export default function SchedulePage() {
         .select("season")
         .order("season", { ascending: true });
 
-      if (data?.length) {
-        const seasonsArr = data.map((s) => s.season);
-        setSeasons(seasonsArr);
-        setSelectedSeason(Math.max(...seasonsArr));
-      }
+        if (data?.length) {
+          const seasonsArr = data.map((s) => s.season);
+          setSeasons(seasonsArr);
+        
+          const savedSeason = Number(localStorage.getItem("selectedSeason"));
+        
+          if (savedSeason && seasonsArr.includes(savedSeason)) {
+            setSelectedSeason(savedSeason);
+          } else {
+            const newestSeason = Math.max(...seasonsArr);
+            setSelectedSeason(newestSeason);
+            localStorage.setItem("selectedSeason", newestSeason);
+          }
+        }
     }
     fetchSeasons();
   }, []);
@@ -298,7 +314,11 @@ export default function SchedulePage() {
             <select
               className="season-select"
               value={selectedSeason || ""}
-              onChange={(e) => setSelectedSeason(Number(e.target.value))}
+              onChange={(e) => {
+                const season = Number(e.target.value);
+                setSelectedSeason(season);
+                localStorage.setItem("selectedSeason", season);
+              }}
             >
               {seasons.map((s) => (
                 <option key={s} value={s}>
@@ -331,6 +351,10 @@ export default function SchedulePage() {
                         onClick={() => {
                           setSelectedTeam(t.nhl_team);
                           setSelectedManager(t.manager);
+                        
+                          localStorage.setItem("selectedTeam", t.nhl_team);
+                          localStorage.setItem("selectedManager", t.manager);
+                        
                           setManagerDropdownOpen(false);
                         }}
                       >
