@@ -7,7 +7,12 @@ import { nhlLogos } from "../constants/nhlLogos";
 
 export default function StandingsPage() {
   const [seasons, setSeasons] = useState([]);
-  const [selectedSeason, setSelectedSeason] = useState("");
+  
+  //const [selectedSeason, setSelectedSeason] = useState("");
+  const [selectedSeason, setSelectedSeason] = useState(
+    () => Number(localStorage.getItem("standingsSeason")) || ""
+  );
+  
   const [standings, setStandings] = useState([]);
   const [playoffSeries, setPlayoffSeries] = useState([]);
   const [activeTab, setActiveTab] = useState("regular");
@@ -21,10 +26,19 @@ export default function StandingsPage() {
         .select("*")
         .order("season", { ascending: false });
 
-      if (!error && data?.length) {
-        setSeasons(data);
-        setSelectedSeason(data[0].season);
-      }
+        if (!error && data?.length) {
+          setSeasons(data);
+        
+          const savedSeason = Number(localStorage.getItem("standingsSeason"));
+        
+          if (savedSeason && data.some((s) => s.season === savedSeason)) {
+            setSelectedSeason(savedSeason);
+          } else {
+            const newestSeason = data[0].season;
+            setSelectedSeason(newestSeason);
+            localStorage.setItem("standingsSeason", newestSeason);
+          }
+        }
     }
     fetchSeasons();
   }, []);
@@ -199,7 +213,11 @@ export default function StandingsPage() {
           <select
             className="season-select"
             value={selectedSeason}
-            onChange={(e) => setSelectedSeason(e.target.value)}
+            onChange={(e) => {
+              const season = Number(e.target.value);
+              setSelectedSeason(season);
+              localStorage.setItem("standingsSeason", season);
+            }}
           >
             {seasons.map((season) => (
               <option key={season.id} value={season.season}>

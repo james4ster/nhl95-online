@@ -11,7 +11,7 @@ export default function SchedulePage() {
   //const [selectedSeason, setSelectedSeason] = useState(null);
 
   const [selectedSeason, setSelectedSeason] = useState(
-    () => localStorage.getItem("selectedSeason") || ""
+    () => localStorage.getItem("scheduleSeason") || ""
   );
 
   const [teams, setTeams] = useState([]);
@@ -22,7 +22,7 @@ export default function SchedulePage() {
   const [selectedTeam, setSelectedTeam] = useState("");
   //const [selectedManager, setSelectedManager] = useState("");
   const [selectedManager, setSelectedManager] = useState(
-    () => localStorage.getItem("selectedManager") || ""
+    () => localStorage.getItem("scheduleManager") || ""
   );
   const [games, setGames] = useState([]);
 
@@ -57,14 +57,14 @@ export default function SchedulePage() {
           const seasonsArr = data.map((s) => s.season);
           setSeasons(seasonsArr);
         
-          const savedSeason = Number(localStorage.getItem("selectedSeason"));
+          const savedSeason = Number(localStorage.getItem("scheduleSeason"));
         
           if (savedSeason && seasonsArr.includes(savedSeason)) {
             setSelectedSeason(savedSeason);
           } else {
             const newestSeason = Math.max(...seasonsArr);
             setSelectedSeason(newestSeason);
-            localStorage.setItem("selectedSeason", newestSeason);
+            localStorage.setItem("scheduleSeason", newestSeason);
           }
         }
     }
@@ -317,7 +317,7 @@ export default function SchedulePage() {
               onChange={(e) => {
                 const season = Number(e.target.value);
                 setSelectedSeason(season);
-                localStorage.setItem("selectedSeason", season);
+                localStorage.setItem("scheduleSeason", season);
               }}
             >
               {seasons.map((s) => (
@@ -352,8 +352,8 @@ export default function SchedulePage() {
                           setSelectedTeam(t.nhl_team);
                           setSelectedManager(t.manager);
                         
-                          localStorage.setItem("selectedTeam", t.nhl_team);
-                          localStorage.setItem("selectedManager", t.manager);
+                          localStorage.setItem("scheduleTeam", t.nhl_team);
+                          localStorage.setItem("scheduleManager", t.manager);
                         
                           setManagerDropdownOpen(false);
                         }}
