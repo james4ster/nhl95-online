@@ -870,6 +870,20 @@
   font-weight: 700;
   color: var(--gold);
 }
+.standings-streak.is-win {
+  color: var(--win);
+  font-weight: 700;
+}
+
+.standings-streak.is-loss {
+  color: var(--loss);
+  font-weight: 700;
+}
+
+.standings-streak.is-tie {
+  color: var(--gold);
+  font-weight: 700;
+}
 
 @media (max-width: 760px) {
   .standings-table th.col-extra,

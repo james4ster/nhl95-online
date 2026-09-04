@@ -66,6 +66,8 @@ export default function StandingsPage() {
               losses: row.l,
               ties: row.t || 0,
               points: row.pts,
+              streak: row.streak,
+              streak_value: streakValue(row.streak),
               goals_for: row.gf,
               goals_against: row.ga,
               gf_per_game: (row.gf || 0) / (gp || 1),
@@ -174,6 +176,36 @@ export default function StandingsPage() {
       return acc;
     }, new Map())
   );
+
+  //--------- Streaks Helpers--------
+  function streakClass(streak) {
+    if (!streak) return "";
+    const type = streak.slice(-1).toUpperCase();
+    if (type === "W") return "is-win";
+    if (type === "L") return "is-loss";
+    if (type === "T") return "is-tie";
+    return "";
+  }
+
+  function streakValue(streak) {
+    if (!streak) return 0;
+    const match = streak.match(/^(\d+)([WLT])$/i);
+    if (!match) return 0;
+    const num = parseInt(match[1], 10);
+    const type = match[2].toUpperCase();
+    if (type === "W") return num;
+    if (type === "L") return -num;
+    return 0; // ties treated as neutral
+  }
+  
+  function streakClass(streak) {
+    if (!streak) return "";
+    const type = streak.slice(-1).toUpperCase();
+    if (type === "W") return "is-win";
+    if (type === "L") return "is-loss";
+    if (type === "T") return "is-tie";
+    return "";
+  }
 
   // --- Sorting ---
   function handleSort(field, numeric) {
@@ -290,6 +322,7 @@ export default function StandingsPage() {
                   <th className={`col-extra ${sortField === "max_pts" ? "is-sorted" : ""}`} onClick={() => handleSort("max_pts", true)}>
                     MAX{arrow("max_pts")}
                   </th>
+                  <th className={`col-extra ${sortField === "streak_value" ? "is-sorted" : ""}`} onClick={() => handleSort("streak_value", true)}> STRK{arrow("streak_value")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,6 +344,7 @@ export default function StandingsPage() {
                     <td className="col-extra">{row.ga_per_game.toFixed(2)}</td>
                     <td className="col-extra">{row.tpr}</td>
                     <td className="col-extra">{row.max_pts}</td>
+                    <td className={`col-extra standings-streak ${streakClass(row.streak)}`}> {row.streak || "–"}</td>
                   </tr>
                 ))}
               </tbody>
