@@ -105,17 +105,17 @@ export default function ManagerProfile() {
         .eq("manager", targetManager.name)
         .order("season", { ascending: false });
 
-      const mergedRows = (standingsData || []).map((r) => {
-        const gp = r.w + r.l + (r.t || 0);
-        const pts_percent = gp > 0 ? ((r.pts || 0) / (gp * 2)).toFixed(3) : "0.000";
-        return {
-          ...r,
-          key: r.season + r.nhl_team,
-          logo_url: nhlLogos[r.nhl_team?.toUpperCase()] || "/images/nhl-logos/default.webp",
-          gp,
-          pts_percent,
-        };
-      });
+        const mergedRows = (standingsData || []).map((r) => {
+          const gp = r.w + r.l + (r.t || 0);
+        
+          return {
+            ...r,
+            key: r.season + r.nhl_team,
+            logo_url: nhlLogos[r.nhl_team?.toUpperCase()] || "/images/nhl-logos/default.webp",
+            gp,
+            pts_percent: Number(r.pts_percent).toFixed(3),
+          };
+        });
 
       const historyRowsDesc = [...mergedRows].sort((a, b) => b.season - a.season);
       setRows(historyRowsDesc);
