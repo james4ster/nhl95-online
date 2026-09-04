@@ -20,7 +20,8 @@ function App() {
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/champions" element={<ChampionsPage />} />
         <Route path="/stats" element={<StatsPage />} />
-        <Route path="/managers/:managerId" element={<ManagerProfile />} />
+        <Route path="/managers" element={<ManagerProfile />} />
+        <Route path="/managers/:managerId" element={<ManagerProfile />} />  
       </Routes>
     </Router>
   );
