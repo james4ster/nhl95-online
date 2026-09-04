@@ -4,10 +4,10 @@ import { useTheme } from "../ThemeContext";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", icon: "🏠", end: true },
-  { to: "/standings", label: "Standings", icon: "📊" },
-  { to: "/schedule", label: "Schedule", icon: "🗓️" },
-  { to: "/manager-stats", label: "Managers", icon: "👤" },
-  { to: "/team-stats", label: "Teams", icon: "🏒" },
+  { to: "/standings", label: "Standings", icon: "📈" },
+  { to: "/schedule", label: "Schedule", icon: "📅" },
+  { to: "/managers", label: "Managers", icon: "👤" },
+  { to: "/stats", label: "Stats", icon: "📊" },
   { to: "/champions", label: "Champions", icon: "🏆" },
 ];
 

@@ -1766,3 +1766,269 @@
   text-transform: uppercase;
   color: var(--text-faint);
 }
+
+
+
+/* ---------- Stats page ---------- */
+
+.stats-loading {
+  text-align: center;
+  color: var(--text-faint);
+  padding: 40px 0;
+}
+
+.stats-table-panel {
+  padding: 18px;
+}
+
+.stats-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.stats-table {
+  white-space: nowrap;
+}
+
+.stats-team-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.stats-team-cell .team-badge {
+  width: 28px;
+  height: 28px;
+}
+
+.stats-titles-cell {
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.stats-gd-pos {
+  color: var(--win);
+  font-weight: 700;
+}
+
+.stats-gd-neg {
+  color: var(--loss);
+  font-weight: 700;
+}
+
+.stats-cell-sorted {
+  background: var(--accent-wash);
+}
+
+/* Sticky rank + name/team columns so context stays visible while
+   scrolling through the rest of the stats horizontally. */
+.col-sticky {
+  position: sticky;
+  background: var(--surface);
+  z-index: 2;
+}
+
+.col-sticky-rank {
+  left: 0;
+  min-width: 40px;
+}
+
+.col-sticky-name {
+  left: 40px;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.25);
+}
+
+.stats-table tbody tr:hover .col-sticky {
+  background: var(--surface-alt);
+}
+
+thead .col-sticky {
+  background: var(--surface);
+  z-index: 3;
+}
+
+
+
+
+
+/* ---------- Manager profile page ---------- */
+
+.manager-not-found {
+  color: var(--loss);
+}
+
+.manager-hero {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.manager-hero-avatar {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+}
+
+.manager-hero-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  padding: 16px 40px 16px 104px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.manager-season-panel {
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.manager-season-heading {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 1.4rem;
+  color: var(--accent);
+  margin-bottom: 6px;
+  flex-basis: 100%;
+}
+
+.manager-season-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.manager-season-logo.is-champ {
+  box-shadow: 0 0 12px rgba(242, 183, 5, 0.6);
+}
+
+.manager-chart-panel {
+  padding: 20px;
+  margin-bottom: 32px;
+}
+
+.manager-chart-tooltip {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text);
+}
+
+.manager-chart-tooltip-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+
+.manager-chart-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.manager-chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 8px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.manager-chart-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.manager-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.manager-section {
+  margin-bottom: 24px;
+}
+
+.manager-toggle-btn {
+  background: var(--surface-alt);
+  color: var(--accent);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.manager-toggle-btn:hover {
+  background: var(--accent-wash);
+  border-color: var(--accent);
+}
+
+.manager-team-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+}
+
+.manager-team-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.manager-team-logo.is-champ {
+  box-shadow: 0 0 10px rgba(242, 183, 5, 0.6);
+}
+
+.manager-champ-trophy {
+  font-size: 0.9rem;
+}
+
+.manager-opponent-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.manager-opponent-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  object-fit: cover;
+}
+
+@media (max-width: 600px) {
+  .manager-chart-panel {
+    display: none;
+  }
+}
