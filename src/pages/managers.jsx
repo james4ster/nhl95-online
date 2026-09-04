@@ -14,6 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import ManagerAvatar from "../components/ManagerAvatar";
 
 // Fixed hex values matching the dark theme tokens — Recharts renders raw
 // SVG, so CSS vars aren't available here. Same limitation as the original.
@@ -60,7 +61,7 @@ export default function ManagerProfile() {
 
       const { data: managersData } = await supabase
         .from("managers")
-        .select("id, name, discord_avatar_url")
+        .select("id, name, discord_id, discord_avatar_url")
         .order("name", { ascending: true });
 
       setAllManagers(managersData || []);
@@ -154,26 +155,35 @@ export default function ManagerProfile() {
       });
 
       const avatarMap = {};
-      (managersData || []).forEach((m) => {
-        avatarMap[m.name.toLowerCase()] = m.discord_avatar_url;
-      });
+        (managersData || []).forEach((m) => {
+          avatarMap[m.name.toLowerCase()] = {
+            avatar_url: m.discord_avatar_url,
+            discord_id: m.discord_id,
+          };
+        });
 
-      setH2hRows(
-        (h2hData || []).map((row) => ({
-          key: row.opponent,
-          opponent: row.opponent,
-          avatar_url: avatarMap[row.opponent?.toLowerCase()] || null,
-          GP: row.gp,
-          W: row.w,
-          L: row.l,
-          T: row.t,
-          PTS: row.pts,
-          pts_percent: Number(row.pts_percent).toFixed(3),
-          GF: row.gf,
-          GA: row.ga,
-          GD: row.gd,
-        }))
-      );
+        setH2hRows(
+          (h2hData || []).map((row) => {
+            const opponentAvatar =
+              avatarMap[row.opponent?.toLowerCase()] || null;
+        
+            return {
+              key: row.opponent,
+              opponent: row.opponent,
+              avatar_url: opponentAvatar?.avatar_url || null,
+              discord_id: opponentAvatar?.discord_id || null,
+              GP: row.gp,
+              W: row.w,
+              L: row.l,
+              T: row.t,
+              PTS: row.pts,
+              pts_percent: Number(row.pts_percent).toFixed(3),
+              GF: row.gf,
+              GA: row.ga,
+              GD: row.gd,
+            };
+          })
+        );
 
       setLoading(false);
     }
@@ -289,11 +299,12 @@ export default function ManagerProfile() {
       <div className="page">
         {/* Selector + avatar */}
         <div className="manager-hero">
-          <img
-            src={manager.discord_avatar_url}
-            alt={manager.name}
-            className="manager-hero-avatar"
-          />
+        <ManagerAvatar
+          src={manager.discord_avatar_url}
+          discordId={manager.discord_id}
+          alt={manager.name}
+          className="manager-hero-avatar"
+        />
           <select
             className="manager-hero-select"
             value={manager.id}
@@ -479,9 +490,12 @@ export default function ManagerProfile() {
                       <tr key={row.key}>
                         <td style={{ textAlign: "left" }}>
                           <div className="manager-opponent-cell">
-                            {row.avatar_url && (
-                              <img src={row.avatar_url} alt={row.opponent} className="manager-opponent-avatar" />
-                            )}
+                          <ManagerAvatar
+                            src={row.avatar_url}
+                            discordId={row.discord_id}
+                            alt={row.opponent}
+                            className="manager-opponent-avatar"
+                          />
                             <span>{row.opponent}</span>
                           </div>
                         </td>

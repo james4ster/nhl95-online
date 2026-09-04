@@ -8,6 +8,7 @@ import Layout from "../components/Layout";
 import TeamBadge from "../components/TeamBadge";
 import CountdownTimer from "../components/CountdownTimer";
 import { supabase } from "../utils/supabaseClient";
+import ManagerAvatar from "../components/ManagerAvatar";
 
 const LAST_GAMES_COUNT = 10;
 
@@ -69,18 +70,28 @@ export default function HomePage() {
         .order("game_timestamp", { ascending: false })
         .limit(LAST_GAMES_COUNT);
 
-      const { data: managersData } = await supabase.from("managers").select("name, discord_avatar_url");
+      const { data: managersData } = await supabase.from("managers").select("name, discord_id, discord_avatar_url");
       const managerAvatarMap = {};
-      managersData?.forEach((m) => {
-        managerAvatarMap[m.name] = m.discord_avatar_url;
-      });
+        managersData?.forEach((m) => {
+        managerAvatarMap[m.name] = {
+        avatar_url: m.discord_avatar_url,
+        discord_id: m.discord_id,
+        };
+      }); 
 
       setLastGames(
-        lastGamesData?.map((g) => ({
-          ...g,
-          homeAvatar: managerAvatarMap[g.home],
-          awayAvatar: managerAvatarMap[g.away],
-        })) || []
+        lastGamesData?.map((g) => {
+          const homeManager = managerAvatarMap[g.home];
+          const awayManager = managerAvatarMap[g.away];
+      
+          return {
+            ...g,
+            homeAvatar: homeManager?.avatar_url || null,
+            homeDiscordId: homeManager?.discord_id || null,
+            awayAvatar: awayManager?.avatar_url || null,
+            awayDiscordId: awayManager?.discord_id || null,
+          };
+        }) || []
       );
 
       const { data: topManagersData } = await supabase
@@ -178,11 +189,11 @@ export default function HomePage() {
                 return (
                   <div className="game-row" key={g.game_id ?? `${g.away_team}-${g.home_team}-${g.game_timestamp}`}>
                     {g.awayAvatar && (
-                      <img
+                      <ManagerAvatar
                         src={g.awayAvatar}
+                        discordId={g.awayDiscordId}
                         alt={g.away}
                         className="game-row-avatar"
-                        onError={(e) => { e.currentTarget.style.display = "none"; }}
                       />
                     )}
                     <div className="game-row-center">
@@ -193,11 +204,11 @@ export default function HomePage() {
                       <TeamBadge team={g.home_team} size="md" />
                     </div>
                     {g.homeAvatar && (
-                      <img
+                      <ManagerAvatar
                         src={g.homeAvatar}
+                        discordId={g.homeDiscordId}
                         alt={g.home}
                         className="game-row-avatar"
-                        onError={(e) => { e.currentTarget.style.display = "none"; }}
                       />
                     )}
                   </div>

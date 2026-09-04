@@ -2,6 +2,7 @@ import React from "react";
 import { useEffect, useState, useRef } from "react";
 import Layout from "../components/Layout";
 import TeamBadge from "../components/TeamBadge";
+import ManagerAvatar from "../components/ManagerAvatar";
 import { supabase } from "../utils/supabaseClient";
 
 export default function SchedulePage() {
@@ -112,13 +113,16 @@ export default function SchedulePage() {
     async function fetchAvatars() {
       const { data } = await supabase
         .from("managers")
-        .select("name, discord_avatar_url");
+        .select("name, discord_id, discord_avatar_url");
 
       if (!data) return;
 
       const map = {};
       data.forEach((m) => {
-        map[m.name] = m.discord_avatar_url;
+        map[m.name] = {
+          avatar_url: m.discord_avatar_url,
+          discord_id: m.discord_id,
+        };
       });
       setManagerAvatars(map);
     }
@@ -286,7 +290,12 @@ export default function SchedulePage() {
         {h2h && (
           <div className="schedule-h2h">
             {managerAvatars[oppManager] && (
-              <img src={managerAvatars[oppManager]} alt={oppManager} className="schedule-h2h-avatar" />
+              <ManagerAvatar
+                src={managerAvatars[oppManager].avatar_url}
+                discordId={managerAvatars[oppManager].discord_id}
+                alt={oppManager}
+                className="schedule-h2h-avatar"
+              />
             )}
             <div>
               <div className="schedule-h2h-record">
