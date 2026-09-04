@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 import Layout from "../components/Layout";
 import TeamBadge from "../components/TeamBadge";
+import ManagerAvatar from "../components/ManagerAvatar";
 
 // key: column key, label: header text, align, defaultDir: sort direction on first click
 const TEAM_COLUMNS = [
@@ -44,6 +45,7 @@ export default function StatsPage() {
   const [activeTab, setActiveTab] = useState("team");
   const [teamStats, setTeamStats] = useState([]);
   const [managerStats, setManagerStats] = useState([]);
+  const [managerAvatars, setManagerAvatars] = useState({});
   const [loading, setLoading] = useState(true);
 
   const [teamSort, setTeamSort] = useState({ key: "pts", dir: "desc" });
@@ -51,10 +53,25 @@ export default function StatsPage() {
 
   useEffect(() => {
     async function fetchStats() {
-      const [{ data: team }, { data: manager }] = await Promise.all([
+      const [{ data: team }, { data: manager }, { data: managers }] = await Promise.all([
         supabase.from("pnpl_nhl_team_aggr_stats_vw").select("*"),
         supabase.from("pnpl_manager_stats_vw").select("*"),
+        supabase.from("managers").select("name, discord_id, discord_avatar_url"),
       ]);
+      
+      if (team) setTeamStats(team);
+      if (manager) setManagerStats(manager);
+      
+      const avatarMap = {};
+      (managers || []).forEach((m) => {
+        avatarMap[m.name] = {
+          avatar_url: m.discord_avatar_url,
+          discord_id: m.discord_id,
+        };
+      });
+      
+      setManagerAvatars(avatarMap);
+      setLoading(false);
       if (team) setTeamStats(team);
       if (manager) setManagerStats(manager);
       setLoading(false);
@@ -141,6 +158,26 @@ export default function StatsPage() {
                         >
                           <TeamBadge team={row.nhl_team} size="md" />
                           <span>{row.nhl_team}</span>
+                        </td>
+                      );
+                    }
+                    if (col.key === "manager") {
+                      const managerAvatar = managerAvatars[row.manager];
+                    
+                      return (
+                        <td
+                          key={col.key}
+                          className={`stats-team-cell col-sticky col-sticky-name ${cellClass}`}
+                        >
+                          {managerAvatar && (
+                            <ManagerAvatar
+                              src={managerAvatar.avatar_url}
+                              discordId={managerAvatar.discord_id}
+                              alt={row.manager}
+                              className="stats-manager-avatar"
+                            />
+                          )}
+                          <span>{row.manager}</span>
                         </td>
                       );
                     }

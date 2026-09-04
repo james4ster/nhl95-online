@@ -1803,6 +1803,13 @@
   height: 28px;
 }
 
+.stats-team-cell .stats-manager-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .stats-titles-cell {
   font-weight: 700;
   color: var(--gold);
