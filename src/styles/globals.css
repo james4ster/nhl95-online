@@ -2053,3 +2053,31 @@ thead .col-sticky {
     display: none;
   }
 }
+
+/* ---------- Manager playoff result column ---------- */
+
+.manager-playoff-cell {
+  background: var(--surface-alt);
+  font-weight: 600;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.manager-playoff-cell.is-champion {
+  color: var(--gold);
+}
+
+.manager-playoff-cell.is-won {
+  color: var(--win);
+}
+
+.manager-playoff-cell.is-lost {
+  color: var(--loss);
+}
+
+.manager-playoff-cell.is-upcoming,
+.manager-playoff-cell.is-progress {
+  color: var(--text-faint);
+  font-style: italic;
+  font-weight: 500;
+}

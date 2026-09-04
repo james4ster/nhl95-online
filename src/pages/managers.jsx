@@ -28,6 +28,75 @@ const CHART = {
   border: "#3fc6ff",
 };
 
+// Groups this manager's playoff games by season and labels how far they
+// went. maxRoundBySeason comes from the FULL (unfiltered) playoff table so
+// "Finals" is correctly identified even in formats with varying round counts.
+function computePlayoffResults(allPlayoffGames, managerName, champBySeason) {
+  const maxRoundBySeason = {};
+  allPlayoffGames.forEach((g) => {
+    if (g.round == null) return;
+    maxRoundBySeason[g.season] = Math.max(maxRoundBySeason[g.season] || 0, g.round);
+  });
+
+  const managerGames = allPlayoffGames.filter(
+    (g) => g.home_manager === managerName || g.away_manager === managerName
+  );
+
+  const bySeason = {};
+  managerGames.forEach((g) => {
+    if (!bySeason[g.season]) bySeason[g.season] = [];
+    bySeason[g.season].push(g);
+  });
+
+  const results = {};
+
+  Object.entries(bySeason).forEach(([seasonKey, games]) => {
+    const season = Number(seasonKey);
+    const maxRoundForManager = Math.max(...games.map((g) => g.round));
+    const roundGames = games.filter((g) => g.round === maxRoundForManager);
+
+    let winsManager = 0;
+    let winsOpponent = 0;
+    let decided = 0;
+
+    roundGames.forEach((g) => {
+      const isHome = g.home_manager === managerName;
+      const managerResult = isHome ? g.home_result : g.away_result;
+      if (managerResult) {
+        decided++;
+        if (managerResult === "W") winsManager++;
+        else winsOpponent++;
+      }
+    });
+
+    const overallMax = maxRoundBySeason[season] || maxRoundForManager;
+    const roundLabel = maxRoundForManager === overallMax ? "Finals" : `Round ${maxRoundForManager}`;
+    const isChamp = !!champBySeason[season];
+
+    let label, status;
+    if (isChamp) {
+      label = "Champion";
+      status = "champion";
+    } else if (decided === 0) {
+      label = `${roundLabel} • Upcoming`;
+      status = "upcoming";
+    } else if (winsManager > winsOpponent) {
+      label = `Won ${roundLabel}`;
+      status = "won";
+    } else if (winsOpponent > winsManager) {
+      label = `Lost ${roundLabel}`;
+      status = "lost";
+    } else {
+      label = `${roundLabel} • In Progress`;
+      status = "progress";
+    }
+
+    results[season] = { label, status };
+  });
+
+  return results;
+}
+
 export default function ManagerProfile() {
   const navigate = useNavigate();
   const { managerId } = useParams();
@@ -36,6 +105,7 @@ export default function ManagerProfile() {
   const [allManagers, setAllManagers] = useState([]);
   const [rows, setRows] = useState([]);
   const [h2hRows, setH2hRows] = useState([]);
+  const [playoffResults, setPlayoffResults] = useState({});
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [h2hOpen, setH2hOpen] = useState(false);
@@ -99,26 +169,41 @@ export default function ManagerProfile() {
 
       setManager(targetManager);
 
-      const { data: standingsData } = await supabase
-        .from("pnpl_standings")
-        .select("*")
-        .eq("manager", targetManager.name)
-        .order("season", { ascending: false });
+      const [{ data: standingsData }, { data: allPlayoffGames }] = await Promise.all([
+        supabase
+          .from("pnpl_standings")
+          .select("*")
+          .eq("manager", targetManager.name)
+          .order("season", { ascending: false }),
+        supabase
+          .from("pnpl_raw_playoff_schedule")
+          .select(
+            "season, round, home_manager, away_manager, home_result, away_result, score_home, score_away, game_number"
+          ),
+      ]);
 
-        const mergedRows = (standingsData || []).map((r) => {
-          const gp = r.w + r.l + (r.t || 0);
-        
-          return {
-            ...r,
-            key: r.season + r.nhl_team,
-            logo_url: nhlLogos[r.nhl_team?.toUpperCase()] || "/images/nhl-logos/default.webp",
-            gp,
-            pts_percent: Number(r.pts_percent).toFixed(3),
-          };
-        });
+      const mergedRows = (standingsData || []).map((r) => {
+        const gp = r.w + r.l + (r.t || 0);
+
+        return {
+          ...r,
+          key: r.season + r.nhl_team,
+          logo_url: nhlLogos[r.nhl_team?.toUpperCase()] || "/images/nhl-logos/default.webp",
+          gp,
+          pts_percent: Number(r.pts_percent).toFixed(3),
+        };
+      });
 
       const historyRowsDesc = [...mergedRows].sort((a, b) => b.season - a.season);
       setRows(historyRowsDesc);
+
+      const champBySeason = {};
+      mergedRows.forEach((r) => {
+        champBySeason[r.season] = !!r.champ;
+      });
+      setPlayoffResults(
+        computePlayoffResults(allPlayoffGames || [], targetManager.name, champBySeason)
+      );
 
       const currentSeasonRow = mergedRows.find((r) => r.season === currentSeason);
       setCurrentSeasonStats(
@@ -155,35 +240,34 @@ export default function ManagerProfile() {
       });
 
       const avatarMap = {};
-        (managersData || []).forEach((m) => {
-          avatarMap[m.name.toLowerCase()] = {
-            avatar_url: m.discord_avatar_url,
-            discord_id: m.discord_id,
-          };
-        });
+      (managersData || []).forEach((m) => {
+        avatarMap[m.name.toLowerCase()] = {
+          avatar_url: m.discord_avatar_url,
+          discord_id: m.discord_id,
+        };
+      });
 
-        setH2hRows(
-          (h2hData || []).map((row) => {
-            const opponentAvatar =
-              avatarMap[row.opponent?.toLowerCase()] || null;
-        
-            return {
-              key: row.opponent,
-              opponent: row.opponent,
-              avatar_url: opponentAvatar?.avatar_url || null,
-              discord_id: opponentAvatar?.discord_id || null,
-              GP: row.gp,
-              W: row.w,
-              L: row.l,
-              T: row.t,
-              PTS: row.pts,
-              pts_percent: Number(row.pts_percent).toFixed(3),
-              GF: row.gf,
-              GA: row.ga,
-              GD: row.gd,
-            };
-          })
-        );
+      setH2hRows(
+        (h2hData || []).map((row) => {
+          const opponentAvatar = avatarMap[row.opponent?.toLowerCase()] || null;
+
+          return {
+            key: row.opponent,
+            opponent: row.opponent,
+            avatar_url: opponentAvatar?.avatar_url || null,
+            discord_id: opponentAvatar?.discord_id || null,
+            GP: row.gp,
+            W: row.w,
+            L: row.l,
+            T: row.t,
+            PTS: row.pts,
+            pts_percent: Number(row.pts_percent).toFixed(3),
+            GF: row.gf,
+            GA: row.ga,
+            GD: row.gd,
+          };
+        })
+      );
 
       setLoading(false);
     }
@@ -240,42 +324,31 @@ export default function ManagerProfile() {
         </text>
 
         {logo && (
-  <g>
-    {isChamp && (
-      <rect
-        x={-18}
-        y={16}
-        width={36}
-        height={36}
-        rx={6}
-        ry={6}
-        fill={CHART.surface}
-        stroke="#f2b705"
-        strokeWidth={2}
-        filter="url(#glow)"
-      />
-    )}
+          <g>
+            {isChamp && (
+              <rect
+                x={-18}
+                y={16}
+                width={36}
+                height={36}
+                rx={6}
+                ry={6}
+                fill={CHART.surface}
+                stroke="#f2b705"
+                strokeWidth={2}
+                filter="url(#glow)"
+              />
+            )}
 
-    <image
-      href={logo}
-      x={-18}
-      y={16}
-      width={36}
-      height={36}
-    />
+            <image href={logo} x={-18} y={16} width={36} height={36} />
 
-    {isChamp && (
-      <text
-        x={15}
-        y={25}
-        fontSize={16}
-        textAnchor="middle"
-      >
-        🏆
-      </text>
-    )}
-  </g>
-)}
+            {isChamp && (
+              <text x={15} y={25} fontSize={16} textAnchor="middle">
+                🏆
+              </text>
+            )}
+          </g>
+        )}
       </g>
     );
   };
@@ -299,12 +372,12 @@ export default function ManagerProfile() {
       <div className="page">
         {/* Selector + avatar */}
         <div className="manager-hero">
-        <ManagerAvatar
-          src={manager.discord_avatar_url}
-          discordId={manager.discord_id}
-          alt={manager.name}
-          className="manager-hero-avatar"
-        />
+          <ManagerAvatar
+            src={manager.discord_avatar_url}
+            discordId={manager.discord_id}
+            alt={manager.name}
+            className="manager-hero-avatar"
+          />
           <select
             className="manager-hero-select"
             value={manager.id}
@@ -426,34 +499,41 @@ export default function ManagerProfile() {
                       <th>GA</th>
                       <th>GD</th>
                       <th>Rank</th>
+                      <th>Playoffs</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.key}>
-                        <td>{row.season}</td>
-                        <td>
-                          <div className="manager-team-cell">
-                            <img
-                              src={row.logo_url}
-                              alt={row.nhl_team}
-                              className={`manager-team-logo ${row.champ ? "is-champ" : ""}`}
-                            />
-                            {row.champ && <span className="manager-champ-trophy">🏆</span>}
-                          </div>
-                        </td>
-                        <td>{row.gp}</td>
-                        <td>{row.w}</td>
-                        <td>{row.l}</td>
-                        <td>{row.t}</td>
-                        <td>{row.pts}</td>
-                        <td>{row.pts_percent}</td>
-                        <td>{row.gf}</td>
-                        <td>{row.ga}</td>
-                        <td>{row.gd}</td>
-                        <td>{row.season_rank}</td>
-                      </tr>
-                    ))}
+                    {rows.map((row) => {
+                      const playoff = playoffResults[row.season];
+                      return (
+                        <tr key={row.key}>
+                          <td>{row.season}</td>
+                          <td>
+                            <div className="manager-team-cell">
+                              <img
+                                src={row.logo_url}
+                                alt={row.nhl_team}
+                                className={`manager-team-logo ${row.champ ? "is-champ" : ""}`}
+                              />
+                              {row.champ && <span className="manager-champ-trophy">🏆</span>}
+                            </div>
+                          </td>
+                          <td>{row.gp}</td>
+                          <td>{row.w}</td>
+                          <td>{row.l}</td>
+                          <td>{row.t}</td>
+                          <td>{row.pts}</td>
+                          <td>{row.pts_percent}</td>
+                          <td>{row.gf}</td>
+                          <td>{row.ga}</td>
+                          <td>{row.gd}</td>
+                          <td>{row.season_rank}</td>
+                          <td className={`manager-playoff-cell ${playoff ? `is-${playoff.status}` : ""}`}>
+                            {playoff?.label || ""}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -490,12 +570,12 @@ export default function ManagerProfile() {
                       <tr key={row.key}>
                         <td style={{ textAlign: "left" }}>
                           <div className="manager-opponent-cell">
-                          <ManagerAvatar
-                            src={row.avatar_url}
-                            discordId={row.discord_id}
-                            alt={row.opponent}
-                            className="manager-opponent-avatar"
-                          />
+                            <ManagerAvatar
+                              src={row.avatar_url}
+                              discordId={row.discord_id}
+                              alt={row.opponent}
+                              className="manager-opponent-avatar"
+                            />
                             <span>{row.opponent}</span>
                           </div>
                         </td>
