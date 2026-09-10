@@ -8,8 +8,7 @@ function getInitialTheme() {
   if (typeof window === "undefined") return "dark";
   const saved = window.localStorage.getItem(STORAGE_KEY);
   if (saved === "dark" || saved === "light") return saved;
-  const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
-  return prefersLight ? "light" : "dark";
+  return "dark"; // default to dark regardless of system preference
 }
 
 export function ThemeProvider({ children }) {
