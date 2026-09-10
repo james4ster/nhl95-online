@@ -895,6 +895,133 @@
   }
 }
 
+
+/* ---------- Playoff cutoff + clinch/elimination indicators ---------- */
+
+.standings-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+  padding: 0 4px 14px;
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+.standings-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.standings-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.standings-legend-dot.is-clinched {
+  background: var(--win);
+  box-shadow: 0 0 6px 1px rgba(61, 220, 132, 0.5);
+}
+
+.standings-legend-dot.is-eliminated {
+  background: var(--loss);
+  opacity: 0.6;
+}
+
+.standings-legend-line {
+  width: 18px;
+  height: 0;
+  border-top: 2px dashed var(--accent);
+  flex-shrink: 0;
+}
+
+/* Cutoff row — dashed accent divider right where the field splits */
+.standings-cutoff-row td {
+  border-bottom: 2px dashed var(--accent);
+}
+
+.standings-rank {
+  position: relative;
+}
+
+.standings-cutoff-label {
+  display: block;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .standings-cutoff-label {
+    display: none; /* the dashed border alone still marks the line */
+  }
+}
+
+/* Clinched / eliminated badge, applied to the team logo — no extra column */
+.standings-team-badge-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.standings-team-badge-wrap.is-clinched .team-badge {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--win), 0 0 8px 1px rgba(61, 220, 132, 0.5);
+}
+
+.standings-team-badge-wrap.is-clinched::after {
+  content: "✔";
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--win);
+  color: #06210f;
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--surface-alt);
+}
+
+.standings-team-badge-wrap.is-eliminated .team-badge {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--loss), 0 0 8px 1px rgba(255, 97, 97, 0.5);
+}
+
+.standings-team-badge-wrap.is-eliminated::after {
+  content: "✕";
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--loss);
+  color: #2a0d0d;
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--surface-alt);
+}
+
+/* Subtle fade on eliminated teams' row text — logo carries the strong signal */
+.standings-rank.is-eliminated,
+tr:has(.standings-team-badge-wrap.is-eliminated) .standings-manager {
+  color: var(--text-faint);
+}
+
+
 /* ---------- Playoffs ---------- */
 
 .playoff-wrap {

@@ -7,14 +7,14 @@ import { nhlLogos } from "../constants/nhlLogos";
 
 export default function StandingsPage() {
   const [seasons, setSeasons] = useState([]);
-  
-  //const [selectedSeason, setSelectedSeason] = useState("");
+
   const [selectedSeason, setSelectedSeason] = useState(
     () => Number(localStorage.getItem("standingsSeason")) || ""
   );
-  
+
   const [standings, setStandings] = useState([]);
   const [playoffSeries, setPlayoffSeries] = useState([]);
+  const [maxPlayoffTeams, setMaxPlayoffTeams] = useState(null);
   const [activeTab, setActiveTab] = useState("regular");
   const [sortField, setSortField] = useState("points");
   const [sortDir, setSortDir] = useState("desc");
@@ -26,19 +26,19 @@ export default function StandingsPage() {
         .select("*")
         .order("season", { ascending: false });
 
-        if (!error && data?.length) {
-          setSeasons(data);
-        
-          const savedSeason = Number(localStorage.getItem("standingsSeason"));
-        
-          if (savedSeason && data.some((s) => s.season === savedSeason)) {
-            setSelectedSeason(savedSeason);
-          } else {
-            const newestSeason = data[0].season;
-            setSelectedSeason(newestSeason);
-            localStorage.setItem("standingsSeason", newestSeason);
-          }
+      if (!error && data?.length) {
+        setSeasons(data);
+
+        const savedSeason = Number(localStorage.getItem("standingsSeason"));
+
+        if (savedSeason && data.some((s) => s.season === savedSeason)) {
+          setSelectedSeason(savedSeason);
+        } else {
+          const newestSeason = data[0].season;
+          setSelectedSeason(newestSeason);
+          localStorage.setItem("standingsSeason", newestSeason);
         }
+      }
     }
     fetchSeasons();
   }, []);
@@ -70,6 +70,7 @@ export default function StandingsPage() {
               streak_value: streakValue(row.streak),
               goals_for: row.gf,
               goals_against: row.ga,
+              goal_diff: (row.gf || 0) - (row.ga || 0),
               gf_per_game: (row.gf || 0) / (gp || 1),
               ga_per_game: (row.ga || 0) / (gp || 1),
               tpr: row.possible_points || 0,
@@ -157,6 +158,27 @@ export default function StandingsPage() {
     fetchPlayoffs();
   }, [selectedSeason]);
 
+  /* ---------- PLAYOFF CUTOFF (max_playoff_teams repeats on every row of
+     pnpl_raw_playoff_schedule for a season, so grabbing one row is enough) ---------- */
+  useEffect(() => {
+    if (!selectedSeason) {
+      setMaxPlayoffTeams(null);
+      return;
+    }
+
+    async function fetchMaxPlayoffTeams() {
+      const { data } = await supabase
+        .from("pnpl_raw_playoff_schedule")
+        .select("max_playoff_teams")
+        .eq("season", selectedSeason)
+        .limit(1);
+
+      setMaxPlayoffTeams(data?.[0]?.max_playoff_teams ?? null);
+    }
+
+    fetchMaxPlayoffTeams();
+  }, [selectedSeason]);
+
   // --- Helpers ---
   const teamToManager = {};
   standings.forEach((s) => (teamToManager[s.nhl_team] = s.manager));
@@ -178,15 +200,6 @@ export default function StandingsPage() {
   );
 
   //--------- Streaks Helpers--------
-  function streakClass(streak) {
-    if (!streak) return "";
-    const type = streak.slice(-1).toUpperCase();
-    if (type === "W") return "is-win";
-    if (type === "L") return "is-loss";
-    if (type === "T") return "is-tie";
-    return "";
-  }
-
   function streakValue(streak) {
     if (!streak) return 0;
     const match = streak.match(/^(\d+)([WLT])$/i);
@@ -197,7 +210,7 @@ export default function StandingsPage() {
     if (type === "L") return -num;
     return 0; // ties treated as neutral
   }
-  
+
   function streakClass(streak) {
     if (!streak) return "";
     const type = streak.slice(-1).toUpperCase();
@@ -220,11 +233,72 @@ export default function StandingsPage() {
   const arrow = (field) =>
     sortField === field ? (sortDir === "asc" ? " ▲" : " ▼") : "";
 
+  // The cutoff line (and the "#" column reading as true standings position)
+  // only make sense when the table is actually displayed in standings
+  // order — sorting by any other column reorders the rows, at which point
+  // a divider frozen to a specific row would just land somewhere arbitrary.
+  const isNaturalOrder =
+    (sortField === "points" && sortDir === "desc") || (sortField === "rank" && sortDir === "asc");
+
+  /* ---------- RANK, USING THE REAL TIEBREAKERS ----------
+     1) Points  2) Goal differential  3) Most goals for  4) Least goals against.
+     This also feeds the cutoff line and clinch/elimination math below, so it
+     has to be correct — points alone was leaving ties in arbitrary order. */
   const rankedStandings = [...standings]
-    .sort((a, b) => b.points - a.points)
+    .sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      const aGd = (a.goals_for || 0) - (a.goals_against || 0);
+      const bGd = (b.goals_for || 0) - (b.goals_against || 0);
+      if (bGd !== aGd) return bGd - aGd;
+      if ((b.goals_for || 0) !== (a.goals_for || 0)) return (b.goals_for || 0) - (a.goals_for || 0);
+      return (a.goals_against || 0) - (b.goals_against || 0);
+    })
     .map((row, i) => ({ ...row, rank: i + 1 }));
 
-  const sortedStandings = [...rankedStandings].sort((a, b) => {
+  /* ---------- CLINCHED / ELIMINATED ----------
+     Both checks are deliberately conservative — only flagged when it's
+     mathematically airtight, using each team's own ceiling (max_pts) since
+     it's independent of what other teams do with their remaining games.
+
+     Clinched: current points already beat the best possible finish of the
+     single best team chasing from outside the cutoff — so nobody outside
+     can catch them no matter how the rest of the season plays out.
+
+     Eliminated: this team's own ceiling can't even reach what the team
+     currently holding the last playoff spot has ALREADY banked (a total
+     that can only grow from here) — so there's no path back in.
+
+     Tiebreakers aren't part of this projection on purpose: a tie against a
+     hypothetical future total isn't resolvable in advance, so it correctly
+     falls out as "not yet decided" rather than guessed at. */
+  let rankedWithStatus = rankedStandings;
+  if (maxPlayoffTeams && maxPlayoffTeams > 0 && maxPlayoffTeams < rankedStandings.length) {
+    // If every team is done playing, there's no more uncertainty left to
+    // wait on — the tiebreaker-resolved rank above IS the final word, so a
+    // tie at the cutoff line resolves cleanly instead of staying blank.
+    const seasonComplete = rankedStandings.every((t) => (t.tpr || 0) === 0);
+
+    if (seasonComplete) {
+      rankedWithStatus = rankedStandings.map((row) => ({
+        ...row,
+        playoffStatus: row.rank <= maxPlayoffTeams ? "clinched" : "eliminated",
+      }));
+    } else {
+      const inField = rankedStandings.slice(0, maxPlayoffTeams);
+      const chasers = rankedStandings.slice(maxPlayoffTeams);
+      const chaserCeiling = chasers.length ? Math.max(...chasers.map((t) => t.max_pts)) : -Infinity;
+      const cutoffFloor = inField.length ? inField[inField.length - 1].points : Infinity;
+
+      rankedWithStatus = rankedStandings.map((row) => {
+        let playoffStatus = null;
+        if (row.rank <= maxPlayoffTeams && row.points > chaserCeiling) playoffStatus = "clinched";
+        else if (row.rank > maxPlayoffTeams && row.max_pts < cutoffFloor) playoffStatus = "eliminated";
+        return { ...row, playoffStatus };
+      });
+    }
+  }
+
+  const sortedStandings = [...rankedWithStatus].sort((a, b) => {
     let av = a[sortField];
     let bv = b[sortField];
     if (typeof av === "string") {
@@ -277,10 +351,27 @@ export default function StandingsPage() {
         {/* Regular season */}
         {activeTab === "regular" && (
           <div className="panel home-panel standings-table-panel">
+            {maxPlayoffTeams > 0 && (
+              <div className="standings-legend">
+                <span className="standings-legend-item">
+                  <span className="standings-legend-dot is-clinched" />
+                  Clinched
+                </span>
+                <span className="standings-legend-item">
+                  <span className="standings-legend-dot is-eliminated" />
+                  Eliminated
+                </span>
+                <span className="standings-legend-item">
+                  <span className="standings-legend-line" />
+                  Playoff cutoff (top {maxPlayoffTeams})
+                </span>
+              </div>
+            )}
+
             <table className="standings-table">
               <thead>
                 <tr>
-                  <th className={sortField === "rank" ? "is-sorted" : ""} onClick={() => handleSort("rank", true)}>
+                  <th className={sortField === "rank" ? "is-sorted" : ""} onClick={() => { setSortField("rank"); setSortDir("asc"); }}>
                     #{arrow("rank")}
                   </th>
                   <th className={sortField === "nhl_team" ? "is-sorted" : ""} onClick={() => handleSort("nhl_team", false)}>
@@ -310,6 +401,9 @@ export default function StandingsPage() {
                   <th className={`col-extra ${sortField === "goals_against" ? "is-sorted" : ""}`} onClick={() => handleSort("goals_against", true)}>
                     GA{arrow("goals_against")}
                   </th>
+                  <th className={`col-extra ${sortField === "goal_diff" ? "is-sorted" : ""}`} onClick={() => handleSort("goal_diff", true)}>
+                    GD{arrow("goal_diff")}
+                  </th>
                   <th className={`col-extra ${sortField === "gf_per_game" ? "is-sorted" : ""}`} onClick={() => handleSort("gf_per_game", true)}>
                     GF/G{arrow("gf_per_game")}
                   </th>
@@ -326,11 +420,30 @@ export default function StandingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {sortedStandings.map((row) => (
-                  <tr key={row.nhl_team}>
-                    <td>{row.rank}</td>
+                {sortedStandings.map((row, idx) => (
+                  <tr
+                    key={row.nhl_team}
+                    className={isNaturalOrder && row.rank === maxPlayoffTeams ? "standings-cutoff-row" : ""}
+                  >
+                    <td className={`standings-rank ${row.playoffStatus ? `is-${row.playoffStatus}` : ""}`}>
+                      {idx + 1}
+                      {isNaturalOrder && row.rank === maxPlayoffTeams && (
+                        <span className="standings-cutoff-label">Cutoff</span>
+                      )}
+                    </td>
                     <td>
-                      <TeamBadge team={row.nhl_team} size="lg" />
+                      <span
+                        className={`standings-team-badge-wrap ${row.playoffStatus ? `is-${row.playoffStatus}` : ""}`}
+                        title={
+                          row.playoffStatus === "clinched"
+                            ? "Clinched a playoff spot"
+                            : row.playoffStatus === "eliminated"
+                            ? "Eliminated from playoff contention"
+                            : undefined
+                        }
+                      >
+                        <TeamBadge team={row.nhl_team} size="lg" />
+                      </span>
                     </td>
                     <td className="standings-manager">{row.manager}</td>
                     <td>{row.gp}</td>
@@ -340,6 +453,7 @@ export default function StandingsPage() {
                     <td className="standings-pts">{row.points}</td>
                     <td className="col-extra">{row.goals_for}</td>
                     <td className="col-extra">{row.goals_against}</td>
+                    <td className="col-extra">{row.goal_diff > 0 ? `+${row.goal_diff}` : row.goal_diff}</td>
                     <td className="col-extra">{row.gf_per_game.toFixed(2)}</td>
                     <td className="col-extra">{row.ga_per_game.toFixed(2)}</td>
                     <td className="col-extra">{row.tpr}</td>
