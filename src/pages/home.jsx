@@ -66,7 +66,7 @@ export default function HomePage() {
         .select("*")
         .not("home_score", "is", null)
         .not("away_score", "is", null)
-        .not("updated", "is", null)
+        .eq("season", currentSeason.season)
         .order("game_timestamp", { ascending: false })
         .limit(LAST_GAMES_COUNT);
 
