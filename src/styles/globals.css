@@ -1870,6 +1870,11 @@ thead .col-sticky {
   z-index: 3;
 }
 
+@media (max-width: 760px) {
+  .col-sticky-name {
+    box-shadow: none;
+  }
+}
 
 
 
