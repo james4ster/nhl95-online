@@ -1,0 +1,15 @@
+{
+    "name": "NHL95 Online",
+    "short_name": "NHL95",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0b1118",
+    "theme_color": "#0b1118",
+    "icons": [
+      {
+        "src": "/logo.jpg",
+        "sizes": "512x512",
+        "type": "image/jpeg"
+      }
+    ]
+  }
