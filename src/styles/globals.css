@@ -1885,6 +1885,50 @@ thead .col-sticky {
   margin-bottom: 24px;
 }
 
+.manager-hero-select-wrap {
+  position: relative;
+}
+
+.manager-hero-avatar {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.manager-hero-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  padding: 16px 56px 16px 104px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.manager-hero-chevron {
+  position: absolute;
+  top: 50%;
+  right: 22px;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--text-dim);
+  border-bottom: 2px solid var(--text-dim);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
 .manager-hero-avatar {
   position: absolute;
   top: 50%;
@@ -2012,26 +2056,31 @@ thead .col-sticky {
 }
 
 .manager-team-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
   position: relative;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
 }
 
 .manager-team-logo {
   width: 32px;
   height: 32px;
   object-fit: contain;
-  border-radius: 6px;
+  display: block;
 }
 
 .manager-team-logo.is-champ {
-  box-shadow: 0 0 10px rgba(242, 183, 5, 0.6);
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px var(--gold), 0 0 8px 2px rgba(242, 183, 5, 0.55);
 }
 
 .manager-champ-trophy {
-  font-size: 0.9rem;
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  font-size: 0.8rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.7));
 }
 
 .manager-opponent-cell {
@@ -2054,10 +2103,22 @@ thead .col-sticky {
   }
 }
 
-/* ---------- Manager playoff result column ---------- */
+/* ---------- Manager playoff columns ---------- */
+
+.col-playoff {
+  background: var(--surface-alt);
+}
+
+.stats-table-panel th.col-playoff {
+  background: var(--surface-alt);
+  border-left: none;
+}
+
+.stats-table-panel td.col-playoff:first-of-type {
+  border-left: 1px solid var(--border);
+}
 
 .manager-playoff-cell {
-  background: var(--surface-alt);
   font-weight: 600;
   font-size: 0.82rem;
   white-space: nowrap;

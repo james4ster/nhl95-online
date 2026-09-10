@@ -97,6 +97,47 @@ function computePlayoffResults(allPlayoffGames, managerName, champBySeason) {
   return results;
 }
 
+// Aggregates W/L/GF/GA across ALL playoff rounds a manager played each
+// season (not just their furthest round) — only counting games with a
+// recorded score, so upcoming/unplayed games don't skew the average.
+function computePlayoffStats(allPlayoffGames, managerName) {
+  const managerGames = allPlayoffGames.filter(
+    (g) =>
+      (g.home_manager === managerName || g.away_manager === managerName) &&
+      g.score_home != null &&
+      g.score_away != null
+  );
+
+  const bySeason = {};
+
+  managerGames.forEach((g) => {
+    const isHome = g.home_manager === managerName;
+    const gf = isHome ? g.score_home : g.score_away;
+    const ga = isHome ? g.score_away : g.score_home;
+    const result = isHome ? g.home_result : g.away_result;
+
+    if (!bySeason[g.season]) bySeason[g.season] = { gp: 0, w: 0, l: 0, gf: 0, ga: 0 };
+    const s = bySeason[g.season];
+    s.gp++;
+    if (result === "W") s.w++;
+    else if (result === "L") s.l++;
+    s.gf += gf;
+    s.ga += ga;
+  });
+
+  const out = {};
+  Object.entries(bySeason).forEach(([season, s]) => {
+    out[season] = {
+      ...s,
+      gd: s.gf - s.ga,
+      gfPerGame: s.gp ? (s.gf / s.gp).toFixed(2) : "0.00",
+      gaPerGame: s.gp ? (s.ga / s.gp).toFixed(2) : "0.00",
+    };
+  });
+
+  return out;
+}
+
 export default function ManagerProfile() {
   const navigate = useNavigate();
   const { managerId } = useParams();
@@ -106,6 +147,7 @@ export default function ManagerProfile() {
   const [rows, setRows] = useState([]);
   const [h2hRows, setH2hRows] = useState([]);
   const [playoffResults, setPlayoffResults] = useState({});
+  const [playoffStats, setPlayoffStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [h2hOpen, setH2hOpen] = useState(false);
@@ -204,6 +246,7 @@ export default function ManagerProfile() {
       setPlayoffResults(
         computePlayoffResults(allPlayoffGames || [], targetManager.name, champBySeason)
       );
+      setPlayoffStats(computePlayoffStats(allPlayoffGames || [], targetManager.name));
 
       const currentSeasonRow = mergedRows.find((r) => r.season === currentSeason);
       setCurrentSeasonStats(
@@ -371,13 +414,14 @@ export default function ManagerProfile() {
     <Layout>
       <div className="page">
         {/* Selector + avatar */}
-        <div className="manager-hero">
+        <div className="manager-hero-select-wrap">
           <ManagerAvatar
             src={manager.discord_avatar_url}
             discordId={manager.discord_id}
             alt={manager.name}
             className="manager-hero-avatar"
           />
+
           <select
             className="manager-hero-select"
             value={manager.id}
@@ -389,6 +433,8 @@ export default function ManagerProfile() {
               </option>
             ))}
           </select>
+
+          <span className="manager-hero-chevron" aria-hidden="true" />
         </div>
 
         {/* Current season snapshot */}
@@ -485,26 +531,39 @@ export default function ManagerProfile() {
             <div className="panel home-panel stats-table-panel">
               <div className="stats-table-scroll">
                 <table className="standings-table">
-                  <thead>
-                    <tr>
-                      <th>Season</th>
-                      <th>Team</th>
-                      <th>GP</th>
-                      <th>W</th>
-                      <th>L</th>
-                      <th>T</th>
-                      <th>PTS</th>
-                      <th>PTS%</th>
-                      <th>GF</th>
-                      <th>GA</th>
-                      <th>GD</th>
-                      <th>Rank</th>
-                      <th>Playoffs</th>
-                    </tr>
-                  </thead>
+                <thead>
+                  <tr className="manager-history-group-header">
+                    <th colSpan={12}>Regular Season</th>
+                    <th colSpan={8} className="col-playoff">Playoffs</th>
+                  </tr>
+
+                  <tr>
+                    <th>Season</th>
+                    <th>Team</th>
+                    <th>GP</th>
+                    <th>W</th>
+                    <th>L</th>
+                    <th>T</th>
+                    <th>PTS</th>
+                    <th>PTS%</th>
+                    <th>GF</th>
+                    <th>GA</th>
+                    <th>GD</th>
+                    <th>Rank</th>
+                    <th className="col-playoff">Playoffs</th>
+                    <th className="col-playoff">W</th>
+                    <th className="col-playoff">L</th>
+                    <th className="col-playoff">GF</th>
+                    <th className="col-playoff">GA</th>
+                    <th className="col-playoff">GF/G</th>
+                    <th className="col-playoff">GA/G</th>
+                    <th className="col-playoff">GD</th>
+                  </tr>
+                </thead>
                   <tbody>
                     {rows.map((row) => {
                       const playoff = playoffResults[row.season];
+                      const pStats = playoffStats[row.season];
                       return (
                         <tr key={row.key}>
                           <td>{row.season}</td>
@@ -528,9 +587,16 @@ export default function ManagerProfile() {
                           <td>{row.ga}</td>
                           <td>{row.gd}</td>
                           <td>{row.season_rank}</td>
-                          <td className={`manager-playoff-cell ${playoff ? `is-${playoff.status}` : ""}`}>
+                          <td className={`manager-playoff-cell col-playoff ${playoff ? `is-${playoff.status}` : ""}`}>
                             {playoff?.label || ""}
                           </td>
+                          <td className="col-playoff">{pStats ? pStats.w : ""}</td>
+                          <td className="col-playoff">{pStats ? pStats.l : ""}</td>
+                          <td className="col-playoff">{pStats ? pStats.gf : ""}</td>
+                          <td className="col-playoff">{pStats ? pStats.ga : ""}</td>
+                          <td className="col-playoff">{pStats ? pStats.gfPerGame : ""}</td>
+                          <td className="col-playoff">{pStats ? pStats.gaPerGame : ""}</td>
+                          <td className="col-playoff">{pStats ? pStats.gd : ""}</td>
                         </tr>
                       );
                     })}
