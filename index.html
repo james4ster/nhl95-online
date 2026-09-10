@@ -2,12 +2,89 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="images/logo.jpg" />
     <link rel="apple-touch-icon" href="images/logo.jpg" />
+
+    <!-- PWA -->
     <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0b1118" />
+
+    <!-- Primary SEO -->
+    <title>PNPL — NHL 95 Online League</title>
+
+    <meta
+      name="description"
+      content="PNPL is competitive online NHL 95 Sega Genesis league played on the Retroarch emulator.  Easy to setup, hard to win."
+    />
+
+    <link
+      rel="canonical"
+      href="https://nhl95-online.vercel.app/"
+    />
+
+    <!-- Open Graph / Discord / Facebook -->
+    <meta property="og:type" content="website" />
+
+    <meta
+      property="og:url"
+      content="https://nhl95-online.vercel.app/"
+    />
+
+    <meta
+      property="og:title"
+      content="PNPL — NHL 95 Online League"
+    />
+
+    <meta
+      property="og:description"
+      content="The home of online NHL 95 — standings, schedules, statistics, managers, champions, and league history."
+    />
+
+    <meta
+      property="og:image"
+      content="https://nhl95-online.vercel.app/logo.jpg"
+    />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <meta
+      name="twitter:title"
+      content="PNPL — NHL 95 Online League"
+    />
+
+    <meta
+      name="twitter:description"
+      content="The home of online NHL 95 — standings, schedules, statistics, managers, champions, and league history."
+    />
+
+    <meta
+      name="twitter:image"
+      content="https://nhl95-online.vercel.app/logo.jpg"
+    />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SportsOrganization",
+      "name": "PNPL",
+      "description": "An online NHL 95 Sega Genesis league played on Retroarch. Site features standings, schedules, statistics, managers, champions, and league history.",
+      "url": "https://nhl95-online.vercel.app/",
+      "sport": "Ice Hockey"
+    }
+    </script>
+
     <title>NHL95 Online</title>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
