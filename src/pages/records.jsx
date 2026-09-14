@@ -4,7 +4,7 @@ import { supabase } from "../utils/supabaseClient";
 import Layout from "../components/Layout";
 import TeamBadge from "../components/TeamBadge";
 
-const REGULAR_CATEGORIES = [
+const REGULAR_SEASON_CATEGORIES = [
   { key: "w", label: "Wins", direction: "desc", format: (v) => v },
   { key: "l", label: "Losses", direction: "desc", format: (v) => v },
   { key: "pts", label: "Points", direction: "desc", format: (v) => v },
@@ -18,7 +18,7 @@ const REGULAR_CATEGORIES = [
 ];
 
 // Playoffs have no points system, so those two categories are dropped.
-const PLAYOFF_CATEGORIES = [
+const PLAYOFF_SEASON_CATEGORIES = [
   { key: "w", label: "Wins", direction: "desc", format: (v) => v },
   { key: "l", label: "Losses", direction: "desc", format: (v) => v },
   { key: "gf", label: "GF", direction: "desc", format: (v) => v },
@@ -27,6 +27,10 @@ const PLAYOFF_CATEGORIES = [
   { key: "ga_per_game", label: "GA/Game", direction: "asc", format: (v) => v.toFixed(2) },
   { key: "gd", label: "Goal Diff.", direction: "desc", format: (v) => (v > 0 ? `+${v}` : v) },
   { key: "shutouts", label: "Shutouts", direction: "desc", format: (v) => v },
+];
+
+const SINGLE_GAME_CATEGORIES = [
+  { key: "gf", label: "Goals Scored", direction: "desc", format: (v) => v },
 ];
 
 // Standard competition ranking: ties share a rank, next rank skips ahead
@@ -48,9 +52,13 @@ function topTenRanked(rows, key, direction) {
 }
 
 export default function RecordsPage() {
-  const [activeTab, setActiveTab] = useState("regular");
-  const [regularRows, setRegularRows] = useState([]);
-  const [playoffRows, setPlayoffRows] = useState([]);
+  const [seasonType, setSeasonType] = useState("regular"); // "regular" | "playoffs"
+  const [recordType, setRecordType] = useState("season"); // "season" | "game"
+
+  const [regularSeasonRows, setRegularSeasonRows] = useState([]);
+  const [playoffSeasonRows, setPlayoffSeasonRows] = useState([]);
+  const [regularGameRows, setRegularGameRows] = useState([]);
+  const [playoffGameRows, setPlayoffGameRows] = useState([]);
   const [regularBlowouts, setRegularBlowouts] = useState([]);
   const [playoffBlowouts, setPlayoffBlowouts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +71,7 @@ export default function RecordsPage() {
         supabase
           .from("pnpl_standings")
           .select(
-            "season, manager, nhl_team, w, l, t, pts, pts_percent, gf, ga, gd, gp, total_games"
+            "season, manager, nhl_team, w, l, t, pts, pts_percent, gf, ga, gd, gp, total_games, champ"
           ),
         supabase
           .from("pnpl_raw_schedule")
@@ -75,7 +83,7 @@ export default function RecordsPage() {
           ),
       ]);
 
-      // ---------- Regular season ----------
+      // ---------- Regular season: season-level records ----------
 
       const shutoutsByManagerSeason = {};
       (games || []).forEach((g) => {
@@ -100,28 +108,50 @@ export default function RecordsPage() {
         };
       });
 
-            // Only exclude the current season until a champion has been crowned.
+      // Only exclude the current season until a champion has been crowned.
       // Historical seasons always count, even if an individual row has
       // stale/incomplete GP or total_games data.
       const champBySeason = new Set();
-
       withRates.forEach((r) => {
         if (r.champ) champBySeason.add(r.season);
       });
+      const maxSeason = withRates.length ? Math.max(...withRates.map((r) => r.season)) : null;
 
-      const maxSeason = withRates.length
-        ? Math.max(...withRates.map((r) => r.season))
-        : null;
-
-      setRegularRows(
-        withRates.filter(
-          (r) => r.season !== maxSeason || champBySeason.has(r.season)
-        )
+      setRegularSeasonRows(
+        withRates.filter((r) => r.season !== maxSeason || champBySeason.has(r.season))
       );
 
-      const regularBlowoutRows = (games || [])
-        .filter((g) => g.home_score !== null && g.away_score !== null)
-        .map((g) => ({
+      // ---------- Regular season: single-game records ----------
+
+      const completedRegularGames = (games || []).filter(
+        (g) => g.home_score !== null && g.away_score !== null
+      );
+
+      const regularGameRowsBuilt = [];
+      completedRegularGames.forEach((g) => {
+        regularGameRowsBuilt.push({
+          manager: g.home,
+          nhl_team: g.home_team,
+          opponentManager: g.away,
+          opponentTeam: g.away_team,
+          season: g.season,
+          gf: g.home_score,
+          ga: g.away_score,
+        });
+        regularGameRowsBuilt.push({
+          manager: g.away,
+          nhl_team: g.away_team,
+          opponentManager: g.home,
+          opponentTeam: g.home_team,
+          season: g.season,
+          gf: g.away_score,
+          ga: g.home_score,
+        });
+      });
+      setRegularGameRows(regularGameRowsBuilt);
+
+      setRegularBlowouts(
+        completedRegularGames.map((g) => ({
           season: g.season,
           homeManager: g.home,
           awayManager: g.away,
@@ -130,15 +160,10 @@ export default function RecordsPage() {
           homeScore: g.home_score,
           awayScore: g.away_score,
           gd_abs: Math.abs(g.home_score - g.away_score),
-        }));
-      setRegularBlowouts(regularBlowoutRows);
+        }))
+      );
 
-      // ---------- Playoffs ----------
-
-      const incompletePlayoffSeasons = new Set();
-      (playoffGames || []).forEach((g) => {
-        if (g.score_home == null || g.score_away == null) incompletePlayoffSeasons.add(g.season);
-      });
+      // ---------- Playoffs: season-level records ----------
 
       const completedPlayoffGames = (playoffGames || []).filter(
         (g) => g.score_home != null && g.score_away != null
@@ -175,25 +200,56 @@ export default function RecordsPage() {
         });
       });
 
-      const playoffAggRows = Object.values(playoffAgg).map((s) => ({
-        ...s,
-        gd: s.gf - s.ga,
-        gf_per_game: s.gp > 0 ? s.gf / s.gp : 0,
-        ga_per_game: s.gp > 0 ? s.ga / s.gp : 0,
-      }));
-      setPlayoffRows(playoffAggRows);
+      setPlayoffSeasonRows(
+        Object.values(playoffAgg).map((s) => ({
+          ...s,
+          gd: s.gf - s.ga,
+          gf_per_game: s.gp > 0 ? s.gf / s.gp : 0,
+          ga_per_game: s.gp > 0 ? s.ga / s.gp : 0,
+        }))
+      );
 
-      const playoffBlowoutRows = completedPlayoffGames.map((g) => ({
-        season: g.season,
-        homeManager: g.home_manager,
-        awayManager: g.away_manager,
-        homeTeam: g.home_team_code,
-        awayTeam: g.away_team_code,
-        homeScore: g.score_home,
-        awayScore: g.score_away,
-        gd_abs: Math.abs(g.score_home - g.score_away),
-      }));
-      setPlayoffBlowouts(playoffBlowoutRows);
+      // ---------- Playoffs: single-game records ----------
+
+      const playoffGameRowsBuilt = [];
+      completedPlayoffGames.forEach((g) => {
+        if (g.home_manager) {
+          playoffGameRowsBuilt.push({
+            manager: g.home_manager,
+            nhl_team: g.home_team_code,
+            opponentManager: g.away_manager,
+            opponentTeam: g.away_team_code,
+            season: g.season,
+            gf: g.score_home,
+            ga: g.score_away,
+          });
+        }
+        if (g.away_manager) {
+          playoffGameRowsBuilt.push({
+            manager: g.away_manager,
+            nhl_team: g.away_team_code,
+            opponentManager: g.home_manager,
+            opponentTeam: g.home_team_code,
+            season: g.season,
+            gf: g.score_away,
+            ga: g.score_home,
+          });
+        }
+      });
+      setPlayoffGameRows(playoffGameRowsBuilt);
+
+      setPlayoffBlowouts(
+        completedPlayoffGames.map((g) => ({
+          season: g.season,
+          homeManager: g.home_manager,
+          awayManager: g.away_manager,
+          homeTeam: g.home_team_code,
+          awayTeam: g.away_team_code,
+          homeScore: g.score_home,
+          awayScore: g.score_away,
+          gd_abs: Math.abs(g.score_home - g.score_away),
+        }))
+      );
 
       setLoading(false);
     }
@@ -209,111 +265,180 @@ export default function RecordsPage() {
     );
   }
 
-  const categories =
-  activeTab === "regular"
-    ? REGULAR_CATEGORIES
-    : PLAYOFF_CATEGORIES.filter(
-        (cat) => cat.key !== "w" && cat.key !== "l"
-      );
-      
-  const rows = activeTab === "regular" ? regularRows : playoffRows;
-  const blowouts = activeTab === "regular" ? regularBlowouts : playoffBlowouts;
+  const seasonCategories =
+    seasonType === "regular"
+      ? REGULAR_SEASON_CATEGORIES
+      : PLAYOFF_SEASON_CATEGORIES.filter((cat) => cat.key !== "w" && cat.key !== "l");
+
+  const seasonRows = seasonType === "regular" ? regularSeasonRows : playoffSeasonRows;
+  const gameRows = seasonType === "regular" ? regularGameRows : playoffGameRows;
+  const blowouts = seasonType === "regular" ? regularBlowouts : playoffBlowouts;
   const topBlowouts = topTenRanked(blowouts, "gd_abs", "desc");
 
   return (
     <Layout>
       <div className="page">
         <h1 className="page-title">Records</h1>
-        <p className="records-subtitle">All-time top 10, single-season</p>
+        <p className="records-subtitle">
+          {recordType === "season" ? "All-time top 10, single-season" : "All-time top 10, single-game"}
+        </p>
 
-        <div className="panel standings-controls">
-          <div className="view-tabs">
-            <button
-              className={`view-tab ${activeTab === "regular" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("regular")}
-            >
-              Regular Season
-            </button>
-            <button
-              className={`view-tab ${activeTab === "playoffs" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("playoffs")}
-            >
-              Playoffs
-            </button>
+        <div className="panel standings-controls records-controls">
+          <div className="records-tab-group">
+            <div className="records-tab-label">Season</div>
+            <div className="view-tabs">
+              <button
+                className={`view-tab ${seasonType === "regular" ? "is-active" : ""}`}
+                onClick={() => setSeasonType("regular")}
+              >
+                Regular Season
+              </button>
+              <button
+                className={`view-tab ${seasonType === "playoffs" ? "is-active" : ""}`}
+                onClick={() => setSeasonType("playoffs")}
+              >
+                Playoffs
+              </button>
+            </div>
+          </div>
+
+          <div className="records-tab-group">
+            <div className="records-tab-label">Record Type</div>
+            <div className="view-tabs">
+              <button
+                className={`view-tab ${recordType === "season" ? "is-active" : ""}`}
+                onClick={() => setRecordType("season")}
+              >
+                Season Records
+              </button>
+              <button
+                className={`view-tab ${recordType === "game" ? "is-active" : ""}`}
+                onClick={() => setRecordType("game")}
+              >
+                Single Game Records
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="records-grid">
-          {categories.map((cat) => {
-            const ranked = topTenRanked(rows, cat.key, cat.direction);
-            return (
-              <div className="panel record-panel" key={cat.key}>
-                <h2 className="record-panel-title">{cat.label}</h2>
-                <table className="record-table">
-                  <thead>
-                    <tr>
-                      <th className="record-rank">#</th>
-                      <th>{cat.label}</th>
-                      <th>Szn</th>
-                      <th>Manager</th>
-                      <th>Team</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ranked.map((row, i) => (
-                      <tr key={`${cat.key}-${row.season}-${row.manager}-${i}`}>
-                        <td className="record-rank">{row._rank}</td>
-                        <td className="record-value">{cat.format(row[cat.key])}</td>
-                        <td className="record-season">S{row.season}</td>
-                        <td className="record-manager">{row.manager}</td>
-                        <td className="record-team">
-                          <TeamBadge team={row.nhl_team} size="md" />
-                        </td>
+        {recordType === "season" ? (
+          <div className="records-grid">
+            {seasonCategories.map((cat) => {
+              const ranked = topTenRanked(seasonRows, cat.key, cat.direction);
+              return (
+                <div className="panel record-panel" key={cat.key}>
+                  <h2 className="record-panel-title">{cat.label}</h2>
+                  <table className="record-table">
+                    <thead>
+                      <tr>
+                        <th className="record-rank">#</th>
+                        <th>{cat.label}</th>
+                        <th>Szn</th>
+                        <th>Manager</th>
+                        <th>Team</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })}
-        </div>
+                    </thead>
+                    <tbody>
+                      {ranked.map((row, i) => (
+                        <tr key={`${cat.key}-${row.season}-${row.manager}-${i}`}>
+                          <td className="record-rank">{row._rank}</td>
+                          <td className="record-value">{cat.format(row[cat.key])}</td>
+                          <td className="record-season">S{row.season}</td>
+                          <td className="record-manager">{row.manager}</td>
+                          <td className="record-team">
+                            <TeamBadge team={row.nhl_team} size="md" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <>
+            <div className="records-grid">
+              {SINGLE_GAME_CATEGORIES.map((cat) => {
+                const ranked = topTenRanked(gameRows, cat.key, cat.direction);
+                return (
+                  <div className="panel record-panel" key={cat.key}>
+                    <h2 className="record-panel-title">{cat.label}</h2>
+                    <table className="record-table">
+                      <thead>
+                        <tr>
+                          <th className="record-rank">#</th>
+                          <th>{cat.label}</th>
+                          <th>Szn</th>
+                          <th>Manager</th>
+                          <th>Opponent</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ranked.map((row, i) => (
+                          <tr key={`${cat.key}-${row.season}-${row.manager}-${i}`}>
+                            <td className="record-rank">{row._rank}</td>
+                            <td className="record-value">{cat.format(row[cat.key])}</td>
+                            <td className="record-season">S{row.season}</td>
+                            <td className="record-manager">
+                              <div className="record-team-cell">
+                                <TeamBadge team={row.nhl_team} size="md" />
+                                <span>{row.manager}</span>
+                              </div>
+                            </td>
+                            <td className="record-manager">
+                              <div className="record-team-cell">
+                                <TeamBadge team={row.opponentTeam} size="md" />
+                                <span>{row.opponentManager}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
+            </div>
 
-        {/* Largest margin of victory */}
-        <h2 className="section-heading">Largest Margins of Victory</h2>
-        <div className="panel record-panel record-panel-wide">
-          <table className="record-table record-table-wide">
-            <thead>
-              <tr>
-                <th className="record-rank">#</th>
-                <th>GD</th>
-                <th>Szn</th>
-                <th>Home</th>
-                <th className="record-score-col">Score</th>
-                <th>Away</th>
-                <th className="record-score-col">Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topBlowouts.map((g, i) => (
-                <tr key={`blowout-${g.season}-${i}`}>
-                  <td className="record-rank">{g._rank}</td>
-                  <td className="record-value">{g.gd_abs}</td>
-                  <td className="record-season">S{g.season}</td>
-                  <td className="record-team-cell">
-                    <TeamBadge team={g.homeTeam} size="md" />
-                    <span>{g.homeManager}</span>
-                  </td>
-                  <td className="record-score-col">{g.homeScore}</td>
-                  <td className="record-team-cell">
-                    <TeamBadge team={g.awayTeam} size="md" />
-                    <span>{g.awayManager}</span>
-                  </td>
-                  <td className="record-score-col">{g.awayScore}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            {/* Largest margin of victory */}
+                <div className="panel record-panel record-panel-wide">
+                <h2 className="record-panel-title">Largest Margins of Victory</h2>
+                <table className="record-table record-table-wide">
+                <thead>
+                  <tr>
+                    <th className="record-rank">#</th>
+                    <th>GD</th>
+                    <th>Szn</th>
+                    <th>Home</th>
+                    <th className="record-score-col">Score</th>
+                    <th>Away</th>
+                    <th className="record-score-col">Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topBlowouts.map((g, i) => (
+                    <tr key={`blowout-${g.season}-${i}`}>
+                      <td className="record-rank">{g._rank}</td>
+                      <td className="record-value">{g.gd_abs}</td>
+                      <td className="record-season">S{g.season}</td>
+                      <td className="record-team-cell">
+                        <TeamBadge team={g.homeTeam} size="md" />
+                        <span>{g.homeManager}</span>
+                      </td>
+                      <td className="record-score-col">{g.homeScore}</td>
+                      <td className="record-team-cell">
+                        <TeamBadge team={g.awayTeam} size="md" />
+                        <span>{g.awayManager}</span>
+                      </td>
+                      <td className="record-score-col">{g.awayScore}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
     </Layout>
   );
