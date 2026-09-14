@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/managers", label: "Managers", icon: "👤" },
   { to: "/stats", label: "Stats", icon: "📊" },
   { to: "/champions", label: "Champions", icon: "🏆" },
+  { to: "/records", label: "Records", icon: "📖" },
 ];
 
 function ThemeToggle() {
