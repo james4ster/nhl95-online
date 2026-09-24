@@ -1130,6 +1130,17 @@ tr:has(.standings-team-badge-wrap.is-eliminated) .standings-manager {
   gap: 6px;
 }
 
+.playoff-side-tbd {
+  opacity: 0.5;
+  justify-content: center;
+}
+
+.playoff-tbd-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
 .game-chip {
   display: flex;
   align-items: center;

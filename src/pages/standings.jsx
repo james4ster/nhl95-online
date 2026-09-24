@@ -108,10 +108,18 @@ export default function StandingsPage() {
         .order("round", { ascending: true })
         .order("game_number", { ascending: true });
 
-      if (!games) return;
+        if (!games) return;
 
-      const seriesMap = {};
-      games.forEach((g) => {
+        // Google Sheets uses fully-empty rows (all fields null, seed sometimes
+        // literal 0) as spacers/placeholders — without a home team assigned
+        // there's no real series here, so exclude them before grouping. Without
+        // this, Math.min(0, null) evaluates to 0 in JS, which can accidentally
+        // group an empty row into its own phantom series (e.g., a duplicate
+        // Finals box).
+        const realGames = games.filter((g) => g.home_team_code);
+        
+        const seriesMap = {};
+        realGames.forEach((g) => {
         const lowSeed = Math.min(g.series_seed_home, g.series_seed_away);
         const highSeed = Math.max(g.series_seed_home, g.series_seed_away);
         const key = `${g.round}-${lowSeed}-${highSeed}`;
@@ -490,19 +498,41 @@ export default function StandingsPage() {
                         key={idx}
                       >
                         <div className="playoff-matchup">
+                        {firstGame.awayTeam ? (
                           <div className={`playoff-side ${awayWon ? "is-winner" : ""}`}>
                             <span className="playoff-seed">#{firstGame.awaySeed}</span>
                             <TeamBadge team={firstGame.awayTeam} size="md" />
                             <span className="playoff-manager">{awayManager}</span>
                           </div>
+                        ) : (
+                          <div className="playoff-side playoff-side-tbd">
+                            <img
+                              src="/images/tbd.png"
+                              alt="TBD"
+                              className="playoff-tbd-logo"
+                            />
+                            <span className="playoff-manager">TBD</span>
+                          </div>
+                        )}
 
                           <div className="playoff-vs">VS</div>
 
-                          <div className={`playoff-side ${homeWon ? "is-winner" : ""}`}>
-                            <span className="playoff-seed">#{firstGame.homeSeed}</span>
-                            <TeamBadge team={firstGame.homeTeam} size="md" />
-                            <span className="playoff-manager">{homeManager}</span>
-                          </div>
+                          {firstGame.homeTeam ? (
+                            <div className={`playoff-side ${homeWon ? "is-winner" : ""}`}>
+                              <span className="playoff-seed">#{firstGame.homeSeed}</span>
+                              <TeamBadge team={firstGame.homeTeam} size="md" />
+                              <span className="playoff-manager">{homeManager}</span>
+                            </div>
+                          ) : (
+                            <div className="playoff-side playoff-side-tbd">
+                              <img
+                                src="/images/tbd.png"
+                                alt="TBD"
+                                className="playoff-tbd-logo"
+                              />
+                              <span className="playoff-manager">TBD</span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="playoff-games">
@@ -514,22 +544,30 @@ export default function StandingsPage() {
                               <div className="game-chip" key={i}>
                                 <span className="game-chip-num">G{game.gameNumber ?? i + 1}</span>
                                 <div className="game-chip-team">
-                                  <img
-                                    src={game.awayTeamLogo}
-                                    alt=""
-                                    className={`gc-logo ${awayGameWin ? "is-win" : ""}`}
-                                  />
-                                  <span className={`gc-score ${awayGameWin ? "is-win" : ""}`}>
-                                    {padScore(game.awayScore)}
-                                  </span>
-                                </div>
+                                    {game.awayTeam ? (
+                                      <img
+                                        src={game.awayTeamLogo}
+                                        alt=""
+                                        className={`gc-logo ${awayGameWin ? "is-win" : ""}`}
+                                      />
+                                    ) : (
+                                      <span className="gc-logo-placeholder"></span>
+                                    )}
+                                    <span className={`gc-score ${awayGameWin ? "is-win" : ""}`}>
+                                      {padScore(game.awayScore)}
+                                    </span>
+                                  </div>
                                 <span className="game-chip-at">@</span>
                                 <div className="game-chip-team">
-                                  <img
-                                    src={game.homeTeamLogo}
-                                    alt=""
-                                    className={`gc-logo ${homeGameWin ? "is-win" : ""}`}
-                                  />
+                                  {game.homeTeam ? (
+                                    <img
+                                      src={game.homeTeamLogo}
+                                      alt=""
+                                      className={`gc-logo ${homeGameWin ? "is-win" : ""}`}
+                                    />
+                                  ) : (
+                                    <span className="gc-logo-placeholder"></span>
+                                  )}
                                   <span className={`gc-score ${homeGameWin ? "is-win" : ""}`}>
                                     {padScore(game.homeScore)}
                                   </span>
