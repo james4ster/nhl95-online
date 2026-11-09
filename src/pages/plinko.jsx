@@ -17,11 +17,11 @@ const resolveDiscordAvatar = (mgr) => {
   if (raw && raw.startsWith("http")) return raw;
   if (raw && mgr.discord_id) {
     const ext = raw.startsWith("a_") ? "gif" : "png";
-    return `https://discordapp.com{mgr.discord_id}/${raw}.${ext}?size=128`;
+    return "https://discordapp.com" + mgr.discord_id + "/" + raw + "." + ext + "?size=128";
   }
   if (mgr.discord_id) {
     const idx = Number(BigInt(mgr.discord_id) >> 22n) % 6;
-    return `https://discordapp.com{idx}.png`;
+    return "https://discordapp.com" + idx + ".png";
   }
   return null;
 };
@@ -46,19 +46,18 @@ export default function PlinkoDraftPage() {
   const pegs = useMemo(() => buildPegs(), []);
 
   const getCachedImage = (url) => {
-  if (!url) return null;
-  if (!imagesRef.current[url]) {
-    const img = new Image();
-    img.src = url;
-    imagesRef.current[url] = img;
-  }
-  return imagesRef.current[url].complete && imagesRef.current[url].naturalWidth > 0
-    ? imagesRef.current[url]
-    : null;
-};
+    if (!url) return null;
+    if (!imagesRef.current[url]) {
+      const img = new Image();
+      img.src = url;
+      imagesRef.current[url] = img;
+    }
+    return imagesRef.current[url].complete && imagesRef.current[url].naturalWidth > 0
+      ? imagesRef.current[url]
+      : null;
+  };
 
-
-  useEffect(() => {
+    useEffect(() => {
     let mounted = true;
 
     async function init() {
@@ -110,7 +109,8 @@ export default function PlinkoDraftPage() {
       const mMap = {};
       (mgrRes.data || []).forEach((m) => {
         mMap[m.name] = m;
-        if (m.discord_avatar_url) getCachedImage(m.discord_avatar_url);
+        const avatar = resolveDiscordAvatar(m);
+        if (avatar) getCachedImage(avatar);
       });
       setManagersMap(mMap);
 
@@ -192,10 +192,11 @@ export default function PlinkoDraftPage() {
         const { W, H, BIN_TOP, PUCK_R, PEG_R, DROP_Y } = BOARD;
 
         ctx.clearRect(0, 0, W, H);
-        ctx.fillStyle = "#0f172a";
+        ctx.fillStyle = "#0b1324";
         ctx.fillRect(0, 0, W, H);
 
-        ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
+        ctx.lineWidth = 2;
         ctx.setLineDash([6, 6]);
         ctx.beginPath();
         ctx.moveTo(30, DROP_Y);
@@ -203,7 +204,7 @@ export default function PlinkoDraftPage() {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        ctx.fillStyle = "#cbd5e1";
+        ctx.fillStyle = "#e2e8f0";
         for (const p of pegs) {
           ctx.beginPath();
           ctx.arc(p.x, p.y, PEG_R, 0, Math.PI * 2);
@@ -213,12 +214,19 @@ export default function PlinkoDraftPage() {
         const n = activeBins.length;
         if (n > 0) {
           const binW = W / n;
-          ctx.strokeStyle = "#475569";
+          ctx.strokeStyle = "#334155";
           ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, BIN_TOP);
+          ctx.lineTo(W, BIN_TOP);
+          ctx.stroke();
 
           for (let i = 0; i < n; i++) {
             const x0 = i * binW;
             const teamAbbr = activeBins[i];
+
+            ctx.fillStyle = i % 2 === 0 ? "rgba(30, 41, 59, 0.55)" : "rgba(15, 23, 42, 0.55)";
+            ctx.fillRect(x0, BIN_TOP, binW, H - BIN_TOP);
 
             if (
               latestEvent &&
@@ -226,11 +234,13 @@ export default function PlinkoDraftPage() {
               latestEvent.landed_team === teamAbbr &&
               (isAnimating || draftState?.phase === "deciding")
             ) {
-              ctx.fillStyle = "rgba(34, 197, 94, 0.25)";
+              ctx.fillStyle = "rgba(34, 197, 94, 0.35)";
               ctx.fillRect(x0, BIN_TOP, binW, H - BIN_TOP);
             }
 
             if (i > 0) {
+              ctx.strokeStyle = "#475569";
+              ctx.lineWidth = 2;
               ctx.beginPath();
               ctx.moveTo(x0, BIN_TOP);
               ctx.lineTo(x0, H);
@@ -238,22 +248,19 @@ export default function PlinkoDraftPage() {
             }
 
             const logoImg = getCachedImage(getTeamLogoUrl(teamAbbr));
-            const iconSize = Math.max(28, Math.min(binW + 10, 48));
+            const iconSize = Math.min(binW - 3, 44);
             const cx = x0 + binW / 2;
-            // Stagger even/odd rows slightly when there are > 20 bins so big logos don't clip
-            const staggerY = n > 20 ? (i % 2 === 0 ? -18 : 18) : 0;
-            const cy = BIN_TOP + (H - BIN_TOP) / 2 + staggerY;
+            const cy = BIN_TOP + (H - BIN_TOP) / 2;
 
-            if (logoImg) {
-            ctx.drawImage(logoImg, cx - iconSize / 2, cy - iconSize / 2, iconSize, iconSize);
+            if (logoImg && iconSize >= 14) {
+              ctx.drawImage(logoImg, cx - iconSize / 2, cy - iconSize / 2, iconSize, iconSize);
             } else {
-            ctx.fillStyle = "#f8fafc";
-            ctx.font = "bold 11px sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(teamAbbr, cx, cy);
+              ctx.fillStyle = "#f8fafc";
+              ctx.font = "bold 10px sans-serif";
+              ctx.textAlign = "center";
+              ctx.textBaseline = "middle";
+              ctx.fillText(teamAbbr, cx, cy);
             }
-
           }
         }
 
@@ -270,12 +277,11 @@ export default function PlinkoDraftPage() {
           const traj = latestEvent.trajectory;
           const totalFrames = traj.length / 3;
 
-        if (now <= eventStartMs) {
+          if (now <= eventStartMs) {
             puckX = traj[0];
             puckY = traj[1];
             puckAngle = traj[2];
-          }
-        else if (now >= eventEndMs) {
+          } else if (now >= eventEndMs) {
             const last = (totalFrames - 1) * 3;
             puckX = traj[last];
             puckY = traj[last + 1];
@@ -303,26 +309,26 @@ export default function PlinkoDraftPage() {
           ctx.arc(0, 0, PUCK_R, 0, Math.PI * 2);
           ctx.fillStyle = "#38bdf8";
           ctx.fill();
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 2.5;
           ctx.strokeStyle = "#ffffff";
           ctx.stroke();
 
-          const avatarUrl = managersMap[activeMgr]?.discord_avatar_url;
+          const avatarUrl = resolveDiscordAvatar(managersMap[activeMgr]);
           const avatarImg = getCachedImage(avatarUrl);
           if (avatarImg) {
             ctx.beginPath();
-            ctx.arc(0, 0, PUCK_R - 1.5, 0, Math.PI * 2);
+            ctx.arc(0, 0, PUCK_R - 2, 0, Math.PI * 2);
             ctx.clip();
             ctx.drawImage(
               avatarImg,
-              -(PUCK_R - 1.5),
-              -(PUCK_R - 1.5),
-              (PUCK_R - 1.5) * 2,
-              (PUCK_R - 1.5) * 2
+              -(PUCK_R - 2),
+              -(PUCK_R - 2),
+              (PUCK_R - 2) * 2,
+              (PUCK_R - 2) * 2
             );
           } else {
             ctx.fillStyle = "#0f172a";
-            ctx.font = "bold 10px sans-serif";
+            ctx.font = "bold 11px sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText(activeMgr.slice(0, 2).toUpperCase(), 0, 0);
@@ -394,7 +400,6 @@ export default function PlinkoDraftPage() {
     const clickX = (e.clientX - rect.left) * scaleX;
     setDropX(Math.max(30, Math.min(BOARD.W - 30, Math.round(clickX))));
   }
-
   const selectedParticipant = participants.find((p) => p.manager === selectedManager);
   const alreadyHasTeam = !!finalizedByManager[selectedManager];
   const isBoardBusy =
@@ -415,18 +420,44 @@ export default function PlinkoDraftPage() {
   return (
     <Layout>
       <div
-        className="home-grid"
-        style={{ display: "grid", gridTemplateColumns: "minmax(0, 2.2fr) minmax(280px, 1fr)", gap: "1.25rem", alignItems: "start" }}
-        >
-
-        <div className="home-hero">
+        className="page plinko-draft-page"
+        style={{ maxWidth: "1520px", width: "100%", margin: "0 auto", padding: "0 1.25rem 2rem" }}
+      >
+        <div className="home-hero" style={{ marginBottom: "1rem" }}>
           <h1 className="home-hero-title">Season {season} NHL Team Draft</h1>
         </div>
 
-        <div className="panel" style={{ marginBottom: "1rem", padding: "1rem" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "0.25rem" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 2.3fr) minmax(320px, 1fr)",
+            gap: "1.25rem",
+            alignItems: "start",
+          }}
+        >
+          <div className="panel home-panel" style={{ padding: "0.75rem" }}>
+            <canvas
+              ref={canvasRef}
+              width={BOARD.W}
+              height={BOARD.H}
+              onClick={handleCanvasClick}
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: "8px",
+                cursor: canDrop ? "crosshair" : "default",
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            <div className="panel home-panel" style={{ padding: "1.1rem" }}>
+              <h2 className="home-panel-title" style={{ marginBottom: "0.75rem" }}>
+                Drop Controls
+              </h2>
+
+              <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "0.35rem" }}>
                 Select Manager
               </label>
               <select
@@ -435,7 +466,7 @@ export default function PlinkoDraftPage() {
                   setSelectedManager(e.target.value);
                   setErrorMsg("");
                 }}
-                style={{ padding: "0.5rem", borderRadius: "6px" }}
+                style={{ width: "100%", padding: "0.55rem", borderRadius: "6px", marginBottom: "0.85rem" }}
               >
                 <option value="">-- Choose Your Name --</option>
                 {participants.map((p) => (
@@ -453,33 +484,36 @@ export default function PlinkoDraftPage() {
                   </option>
                 ))}
               </select>
-            </div>
 
-            {selectedManager && !alreadyHasTeam && (
-              <div style={{ flex: "1 1 200px" }}>
-                <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "0.25rem" }}>
-                  Drop Position (or click board): {dropX}px
-                </label>
-                <input
-                  type="range"
-                  min={30}
-                  max={BOARD.W - 30}
-                  value={dropX}
-                  onChange={(e) => setDropX(Number(e.target.value))}
-                  disabled={!canDrop}
-                  style={{ width: "100%" }}
-                />
-              </div>
-            )}
+              {selectedManager && !alreadyHasTeam && (
+                <div style={{ marginBottom: "0.85rem" }}>
+                  <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "0.25rem" }}>
+                    Drop Position (or click board): <strong>{dropX}px</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min={30}
+                    max={BOARD.W - 30}
+                    value={dropX}
+                    onChange={(e) => setDropX(Number(e.target.value))}
+                    disabled={!canDrop}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+              )}
 
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
               {canDrop && (
                 <button
                   onClick={handleDrop}
                   disabled={submitting}
                   style={{
-                    padding: "0.6rem 1.25rem",
+                    width: "100%",
+                    padding: "0.75rem 1rem",
+                    background: "#2563eb",
+                    color: "#fff",
+                    fontSize: "1rem",
                     fontWeight: "bold",
+                    border: "none",
                     borderRadius: "6px",
                     cursor: "pointer",
                   }}
@@ -489,15 +523,18 @@ export default function PlinkoDraftPage() {
               )}
 
               {showDecisionButtons && (
-                <>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                   <button
                     onClick={() => handleDecision("keep")}
                     disabled={submitting}
                     style={{
-                      padding: "0.6rem 1rem",
+                      width: "100%",
+                      padding: "0.75rem 1rem",
                       background: "#16a34a",
                       color: "#fff",
+                      fontSize: "1rem",
                       fontWeight: "bold",
+                      border: "none",
                       borderRadius: "6px",
                       cursor: "pointer",
                     }}
@@ -508,102 +545,95 @@ export default function PlinkoDraftPage() {
                     onClick={() => handleDecision("retry")}
                     disabled={submitting}
                     style={{
-                      padding: "0.6rem 1rem",
+                      width: "100%",
+                      padding: "0.75rem 1rem",
                       background: "#dc2626",
                       color: "#fff",
+                      fontSize: "0.95rem",
                       fontWeight: "bold",
+                      border: "none",
                       borderRadius: "6px",
                       cursor: "pointer",
                     }}
                   >
                     Try Again (Must Keep 2nd!)
                   </button>
-                </>
+                </div>
+              )}
+
+              <div
+                style={{
+                  marginTop: "0.85rem",
+                  padding: "0.65rem",
+                  borderRadius: "6px",
+                  background: "rgba(15, 23, 42, 0.55)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                {isAnimating && (
+                  <strong>
+                    LIVE: {latestEvent.manager} is dropping (Attempt #{latestEvent.attempt})...
+                  </strong>
+                )}
+                {!isAnimating && draftState?.phase === "deciding" && (
+                  <strong>
+                    {draftState.active_manager} landed on {latestEvent?.landed_team} — deciding
+                    whether to keep or retry...
+                  </strong>
+                )}
+                {!isAnimating && draftState?.phase === "retry_ready" && (
+                  <strong>
+                    {draftState.active_manager} opted for a retry! Waiting for their 2nd drop...
+                  </strong>
+                )}
+                {!isAnimating && draftState?.phase === "idle" && (
+                  <span>Board is open. Select your name to drop!</span>
+                )}
+                {selectedParticipant && !alreadyHasTeam && (
+                  <div style={{ marginTop: "0.35rem", opacity: 0.85 }}>
+                    Retry token: <strong>{selectedParticipant.has_retry ? "Yes" : "No"}</strong>
+                  </div>
+                )}
+              </div>
+
+              {errorMsg && (
+                <div style={{ color: "#ef4444", marginTop: "0.5rem", fontWeight: "bold" }}>
+                  {errorMsg}
+                </div>
               )}
             </div>
-          </div>
 
-          <div style={{ marginTop: "0.75rem", fontSize: "0.95rem" }}>
-            {isAnimating && (
-              <strong>
-                LIVE: {latestEvent.manager} is dropping (Attempt #{latestEvent.attempt})...
-              </strong>
-            )}
-            {!isAnimating && draftState?.phase === "deciding" && (
-              <strong>
-                {draftState.active_manager} landed on {latestEvent?.landed_team} — deciding
-                whether to keep or retry...
-              </strong>
-            )}
-            {!isAnimating && draftState?.phase === "retry_ready" && (
-              <strong>
-                {draftState.active_manager} opted for a retry! Waiting for their 2nd drop...
-              </strong>
-            )}
-            {!isAnimating && draftState?.phase === "idle" && (
-              <span>Board is open. Select your name to drop!</span>
-            )}
-            {selectedParticipant && !alreadyHasTeam && (
-              <span style={{ marginLeft: "1rem", opacity: 0.8 }}>
-                • Retry token: <strong>{selectedParticipant.has_retry ? "Yes" : "No"}</strong>
-              </span>
-            )}
-          </div>
-
-          {errorMsg && (
-            <div style={{ color: "#ef4444", marginTop: "0.5rem", fontWeight: "bold" }}>
-              {errorMsg}
-            </div>
-          )}
-        </div>
-
-        <div className="home-grid">
-          <div className="panel home-panel" style={{ display: "flex", justifyContent: "center" }}>
-            <canvas
-              ref={canvasRef}
-              width={BOARD.W}
-              height={BOARD.H}
-              onClick={handleCanvasClick}
-              style={{
-                width: "100%",
-                maxWidth: BOARD.W + "px",
-                height: "auto",
-                borderRadius: "8px",
-                cursor: canDrop ? "crosshair" : "default",
-              }}
-            />
-          </div>
-
-          <div className="panel home-panel home-panel-narrow">
-            <h2 className="home-panel-title">
-              Draft Results ({Object.keys(finalizedByManager).length}/{participants.length})
-            </h2>
-            <div className="home-standings-list">
-              {participants.map((p, idx) => {
-                const assignedTeam = finalizedByManager[p.manager];
-                const mgr = managersMap[p.manager];
-                return (
-                  <div className="home-standings-row" key={p.manager}>
-                    <span className="home-standings-rank">{p.draft_position ?? idx + 1}</span>
-                    {mgr?.discord_avatar_url && (
-                      <ManagerAvatar
-                        src={mgr.discord_avatar_url}
-                        discordId={mgr.discord_id}
-                        alt={p.manager}
-                        className="game-row-avatar"
-                      />
-                    )}
-                    <span className="home-standings-name">{p.manager}</span>
-                    {assignedTeam ? (
-                      <TeamBadge team={assignedTeam} size="lg" />
-                    ) : (
-                      <span style={{ opacity: 0.5, fontSize: "0.85rem" }}>
-                        {p.has_retry ? "Pending (2x)" : "Pending"}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="panel home-panel">
+              <h2 className="home-panel-title">
+                Draft Results ({Object.keys(finalizedByManager).length}/{participants.length})
+              </h2>
+              <div className="home-standings-list">
+                {participants.map((p, idx) => {
+                  const assignedTeam = finalizedByManager[p.manager];
+                  const mgr = managersMap[p.manager];
+                  return (
+                    <div className="home-standings-row" key={p.manager}>
+                      <span className="home-standings-rank">{p.draft_position ?? idx + 1}</span>
+                      {mgr?.discord_avatar_url && (
+                        <ManagerAvatar
+                          src={mgr.discord_avatar_url}
+                          discordId={mgr.discord_id}
+                          alt={p.manager}
+                          className="game-row-avatar"
+                        />
+                      )}
+                      <span className="home-standings-name">{p.manager}</span>
+                      {assignedTeam ? (
+                        <TeamBadge team={assignedTeam} size="lg" />
+                      ) : (
+                        <span style={{ opacity: 0.5, fontSize: "0.85rem" }}>
+                          {p.has_retry ? "Pending (2x)" : "Pending"}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
