@@ -14,6 +14,7 @@
         "@vercel/analytics": "^1.6.1",
         "echarts": "^6.0.0",
         "echarts-for-react": "^3.0.6",
+        "planck": "^1.5.1",
         "react": "^19.2.3",
         "react-dom": "^19.2.3",
         "react-router-dom": "^7.13.0",
