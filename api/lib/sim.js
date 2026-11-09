@@ -25,29 +25,17 @@ export function simulateDrop({ binOrder, dropX }) {
 
   const world = new World({ gravity: new Vec2(0, GRAVITY) });
   const fixed = world.createBody();
-  const mat = { friction: 0.04, restitution: 0.68 };
+  const mat = { friction: 0.03, restitution: 0.72 };
 
   for (const p of buildPegs()) {
     fixed.createFixture({ shape: new Circle(new Vec2(p.x * M, p.y * M), PEG_R * M), ...mat });
   }
 
-  // Outer walls + floor
-  const wallMat = { friction: 0.02, restitution: 0.78 };
+  // Smooth outer walls + floor (high restitution kicks wall hits back toward center)
+  const wallMat = { friction: 0.01, restitution: 0.85 };
   fixed.createFixture({ shape: new Box(0.05, (H * M) / 2, new Vec2(-0.05, (H * M) / 2)), ...wallMat });
   fixed.createFixture({ shape: new Box(0.05, (H * M) / 2, new Vec2(W * M + 0.05, (H * M) / 2)), ...wallMat });
   fixed.createFixture({ shape: new Box((W * M) / 2, 0.05, new Vec2((W * M) / 2, H * M + 0.05)), ...mat });
-
-  // Angled side-wall bumpers to kick edge pucks back into the pegs
-  for (let y = 200; y <= 700; y += 125) {
-    fixed.createFixture({
-      shape: new Box(0.18, 0.04, new Vec2(0.08, y * M), 0.55),
-      ...wallMat,
-    });
-    fixed.createFixture({
-      shape: new Box(0.18, 0.04, new Vec2((W - 8) * M, y * M), -0.55),
-      ...wallMat,
-    });
-  }
 
   // Bin dividers with rounded caps
   const hh = ((H - BIN_TOP) * M) / 2;
@@ -63,8 +51,8 @@ export function simulateDrop({ binOrder, dropX }) {
     bullet: true,
     angularDamping: 0.15,
   });
-  puck.createFixture({ shape: new Circle(PUCK_R * M), density: 1, friction: 0.05, restitution: 0.68 });
-  puck.setLinearVelocity(new Vec2((Math.random() - 0.5) * 1.4, 0));
+  puck.createFixture({ shape: new Circle(PUCK_R * M), density: 1, friction: 0.03, restitution: 0.72 });
+  puck.setLinearVelocity(new Vec2((Math.random() - 0.5) * 1.6, 0));
   puck.setAngularVelocity((Math.random() - 0.5) * 8);
 
   const traj = [];
@@ -75,7 +63,7 @@ export function simulateDrop({ binOrder, dropX }) {
   rec();
 
   let step = 0, stall = 0, rest = 0, inBin = 0;
-  const MAX_STEPS = 120 * 45;
+  const MAX_STEPS = 120 * 25; // 25s hard cap so no drop can ever hang
   while (step < MAX_STEPS) {
     world.step(STEP, 8, 3);
     step++;
@@ -89,10 +77,11 @@ export function simulateDrop({ binOrder, dropX }) {
       rest = sp < 0.05 ? rest + 1 : 0;
       if (rest > 25 || inBin > 320) break;
     } else {
-      stall = sp < 0.12 ? stall + 1 : 0;
-      if (stall > 18) {
+      stall = sp < 0.18 ? stall + 1 : 0;
+      if (stall > 15) {
         const dir = p.x < (W * M) / 2 ? 1 : -1;
-        puck.applyLinearImpulse(new Vec2(0.06 * dir, -0.04), puck.getWorldCenter(), true);
+        puck.setLinearVelocity(new Vec2(1.8 * dir, -1.6));
+        puck.setAngularVelocity(6 * dir);
         stall = 0;
       }
     }

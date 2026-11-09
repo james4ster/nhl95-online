@@ -286,23 +286,7 @@ export default function PlinkoDraftPage() {
           ctx.restore();
         }
 
-        // 2. Visible Angled Side-Wall Bumpers
-        ctx.fillStyle = "#475569";
-        for (let by = 200; by <= 700; by += 125) {
-          ctx.beginPath();
-          ctx.moveTo(0, by - 14);
-          ctx.lineTo(22, by + 4);
-          ctx.lineTo(0, by + 16);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.moveTo(W, by - 14);
-          ctx.lineTo(W - 22, by + 4);
-          ctx.lineTo(W, by + 16);
-          ctx.closePath();
-          ctx.fill();
-        }
+        
 
                 // 3. Twinkling Christmas Lights Along Top Edge
         const bulbColors = ["#ef4444", "#22c55e", "#facc15", "#38bdf8"];

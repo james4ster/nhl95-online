@@ -7,7 +7,7 @@ const NHL_EMOJIS = {
   CAL: "<:NHLFlames:1355924219124519074>",
   CGY: "<:NHLFlames:1355924219124519074>",
   CHI: "<:NHLBlackhawks:1355924264641106092>",
-  DAL: "<:NHLStars:1355924768171360406>",
+  DAL: "<:NHLStars:1398023006038790235>",
   DET: "<:NHLRedWings:1355924622469496902>",
   EDM: "<:NHLOilers:1355924672461406238>",
   FLA: "<:NHLPanthers:1355924822319824926>",
@@ -58,7 +58,7 @@ export async function notifyTurnStarted({ season, manager, req }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: `<@582240735793774618> 🚨 **${manager}** is about to **drop** and is about to drop a puck yinz for **Season ${season} **!\n👀 Watch live: ${watchUrl}`,
+        content: `<@582240735793774618> 🚨 **${manager}** is about to **drop** a puck for **Season ${season} ** yinz!\n👀 Watch live: ${watchUrl}`,
         allowed_mentions: { parse: ["users"] },
       }),
     });
@@ -94,8 +94,8 @@ export async function notifyTeamFinalized({ season, manager, team, req, delayMs 
         content: `${emoji} **${manager}** locked in **${abbr}** for Season ${season}!`,
         embeds: [
           {
-            title: `${manager} drafted ${abbr}`,
-            description: `${emoji} Official Season ${season} Team Plinko selection`,
+            title: `${manager} is stuck with ${abbr}`,
+            description: `${emoji} Official Season ${season} Plinko selection`,
             color: 0x16a34a,
             thumbnail: avatarUrl ? { url: avatarUrl } : undefined,
           },

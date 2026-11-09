@@ -11,28 +11,27 @@ export const BOARD = {
   ROWS: 16,
 };
 
-export const FRAME_MS = 1000 / 30; // trajectory sample rate
+export const FRAME_MS = 1000 / 30;
 
 export function buildPegs() {
   const pegs = [];
-  const innerW = BOARD.W - 92; // 46px clearance on both left and right walls (no puck wedging!)
-  const colsEven = 17;
+  const margin = 55; // 55px open clearance on left & right walls (> 30px puck diameter)
+  const innerW = BOARD.W - margin * 2;
+  const colsEven = 16;
   const step = innerW / (colsEven - 1);
 
   for (let r = 0; r < BOARD.ROWS; r++) {
     const y = BOARD.FIRST_ROW_Y + r * BOARD.ROW_DY;
     if (r % 2 === 0) {
       for (let k = 0; k < colsEven; k++) {
-        pegs.push({ x: Math.round(46 + step * k), y });
+        pegs.push({ x: Math.round(margin + step * k), y });
       }
     } else {
       for (let k = 0; k < colsEven - 1; k++) {
-        pegs.push({ x: Math.round(46 + step * (k + 0.5)), y });
+        pegs.push({ x: Math.round(margin + step * (k + 0.5)), y });
       }
-      // Side wall kickers on odd rows to bounce edge pucks back into the action
-      pegs.push({ x: 10, y });
-      pegs.push({ x: BOARD.W - 10, y });
     }
   }
   return pegs;
 }
+
