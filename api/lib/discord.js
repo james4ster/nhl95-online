@@ -46,7 +46,7 @@ function getAvatarUrl(mgr) {
 }
 
 export async function notifyTurnStarted({ season, manager, req }) {
-  const url = process.env.DISCORD_TEST_WEBHOOK;
+  const url = process.env.DISCORD_TEST_URL;
   if (!url) return;
 
   try {
@@ -68,7 +68,7 @@ export async function notifyTurnStarted({ season, manager, req }) {
 
 
 export async function notifyTeamFinalized({ season, manager, team, req, delayMs = 0 }) {
-  const url = process.env.DISCORD_TEST_WEBHOOK;
+  const url = process.env.DISCORD_TEST_URL;
   if (!url) return;
 
   if (delayMs > 0) {
