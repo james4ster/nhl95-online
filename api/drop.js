@@ -1,5 +1,5 @@
-import { db, ensureState, isBusy, LEAD_MS, BUFFER_MS } from "./_lib.js";
-import { simulateDrop, shuffle } from "./_sim.js";
+import { db, ensureState, isBusy, LEAD_MS, BUFFER_MS } from "./lib/db.js";
+import { simulateDrop, shuffle } from "./lib/sim.js";
 import { BOARD } from "../src/utils/plinkoLayout.js";
 
 export default async function handler(req, res) {

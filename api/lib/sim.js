@@ -1,5 +1,5 @@
 import * as planckNS from "planck";
-import { BOARD, FRAME_MS, buildPegs } from "../src/utils/plinkoLayout.js";
+import { BOARD, FRAME_MS, buildPegs } from "../../src/utils/plinkoLayout.js";
 
 const planck = planckNS.default ?? planckNS;
 const { Vec2, World, Circle, Box } = planck;

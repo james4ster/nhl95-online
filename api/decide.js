@@ -1,4 +1,4 @@
-import { db, ensureState, isBusy } from "./_lib.js";
+import { db, ensureState, isBusy } from "./lib/db.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
