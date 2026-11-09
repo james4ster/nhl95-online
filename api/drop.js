@@ -1,6 +1,6 @@
 import { db, ensureState, isBusy, LEAD_MS, BUFFER_MS } from "./_lib.js";
 import { simulateDrop, shuffle } from "./_sim.js";
-import { BOARD } from "../../src/utils/plinkoLayout.js";
+import { BOARD } from "../src/utils/plinkoLayout.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
