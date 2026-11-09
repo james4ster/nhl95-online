@@ -1,5 +1,6 @@
 import { db, ensureState, isBusy } from "./lib/lib.js";
 import { shuffle } from "./lib/sim.js";
+import { notifyTurnStarted } from "./lib/discord.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
@@ -44,5 +45,7 @@ export default async function handler(req, res) {
     .select().maybeSingle();
 
   if (!claimed) return res.status(409).json({ error: "State changed, try clicking Go again." });
+
+  await notifyTurnStarted({ season, manager, req });
   return res.status(200).json({ ok: true });
 }

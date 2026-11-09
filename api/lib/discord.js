@@ -34,7 +34,7 @@ function getAvatarUrl(mgr) {
   if (!mgr) return null;
   const raw = mgr.discord_avatar_url;
   if (raw && raw.startsWith("http")) return raw;
-  if (raw && mgr.discord_id) {
+    if (raw && mgr.discord_id) {
     const ext = raw.startsWith("a_") ? "gif" : "png";
     return `https://discordapp.com{mgr.discord_id}/${raw}.${ext}?size=128`;
   }
@@ -42,6 +42,7 @@ function getAvatarUrl(mgr) {
     const idx = Number(BigInt(mgr.discord_id) >> 22n) % 6;
     return `https://discordapp.com{idx}.png`;
   }
+
   return null;
 }
 

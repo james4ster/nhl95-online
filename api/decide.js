@@ -1,5 +1,6 @@
 import { db, ensureState, isBusy } from "./lib/lib.js";
 import { shuffle } from "./lib/sim.js";
+import { notifyTeamFinalized } from "./lib/discord.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
@@ -16,7 +17,7 @@ export default async function handler(req, res) {
 
   const { data: ev } = await db
     .from("draft_events")
-    .select("id, is_final, decision")
+    .select("id, landed_team, is_final, decision")
     .eq("season", season)
     .eq("manager", manager)
     .order("id", { ascending: false })
@@ -58,6 +59,10 @@ export default async function handler(req, res) {
     .from("draft_events")
     .update({ decision, is_final: decision === "keep" })
     .eq("id", ev.id);
+
+  if (decision === "keep") {
+    await notifyTeamFinalized({ season, manager, team: ev.landed_team, req });
+  }
 
   return res.status(200).json({ ok: true });
 }

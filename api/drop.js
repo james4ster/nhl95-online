@@ -1,6 +1,7 @@
 import { db, ensureState, isBusy, LEAD_MS, BUFFER_MS } from "./lib/lib.js";
 import { simulateDrop, shuffle } from "./lib/sim.js";
 import { BOARD } from "../src/utils/plinkoLayout.js";
+import { notifyTeamFinalized } from "./lib/discord.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
@@ -82,6 +83,17 @@ export default async function handler(req, res) {
       locked_until: new Date(startedAt.getTime() + sim.durationMs + BUFFER_MS).toISOString(),
       version: claimed.version + 1,
     }).eq("season", season);
+
+
+      if (isFinal) {
+    await notifyTeamFinalized({
+      season,
+      manager,
+      team: landedTeam,
+      req,
+      delayMs: sim.durationMs + 1500,
+    });
+  }
 
 
     return res.status(200).json({ ok: true });
