@@ -486,23 +486,62 @@ export default function PlinkoDraftPage() {
     const clickX = (e.clientX - rect.left) * scaleX;
     setDropX(Math.max(30, Math.min(BOARD.W - 30, Math.round(clickX))));
   }
-  const selectedParticipant = participants.find((p) => p.manager === selectedManager);
-  const alreadyHasTeam = !!finalizedByManager[selectedManager];
+    const alreadyHasTeam = !!finalizedByManager[selectedManager];
   const isBoardBusy =
     isAnimating || (draftState?.locked_until && Date.parse(draftState.locked_until) > serverNow);
 
-  const canDrop =
-    selectedManager &&
-    !alreadyHasTeam &&
+  const canDropFor = (mgrName) =>
+    !finalizedByManager[mgrName] &&
     !isBoardBusy &&
     (draftState?.phase === "idle" ||
-      (draftState?.phase === "retry_ready" && draftState?.active_manager === selectedManager));
+      (draftState?.phase === "retry_ready" && draftState?.active_manager === mgrName));
 
-  const showDecisionButtons =
+  const isDecidingFor = (mgrName) =>
     draftState?.phase === "deciding" &&
-    draftState?.active_manager === selectedManager &&
+    draftState?.active_manager === mgrName &&
     !isAnimating;
 
+  async function handleRowGo(mgrName) {
+    if (submitting || !canDropFor(mgrName)) return;
+    soundRef.current.unlock();
+    setSelectedManager(mgrName);
+    setSubmitting(true);
+    setErrorMsg("");
+    try {
+      const res = await fetch(API_BASE + "/drop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ season, manager: mgrName, dropX }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to drop puck");
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleRowDecision(mgrName, decision) {
+    if (submitting || !isDecidingFor(mgrName)) return;
+    soundRef.current.unlock();
+    setSelectedManager(mgrName);
+    setSubmitting(true);
+    setErrorMsg("");
+    try {
+      const res = await fetch(API_BASE + "/decide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ season, manager: mgrName, decision }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit decision");
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
   return (
     <Layout>
       <div
@@ -517,13 +556,13 @@ export default function PlinkoDraftPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(310px, 380px) minmax(0, 1fr)",
+            gridTemplateColumns: "minmax(340px, 420px) minmax(0, 1fr)",
             gap: "1.25rem",
             alignItems: "start",
           }}
         >
-          {/* Left Column: Header + Controls + Team Results */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+          {/* Left Column: Header + Status + Manager Rows with Go / Keep / Retry Buttons */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h1 className="home-hero-title" style={{ margin: 0, fontSize: "1.65rem" }}>
                 Team Plinko
@@ -548,22 +587,73 @@ export default function PlinkoDraftPage() {
               </button>
             </div>
 
-                       <div className="panel home-panel" style={{ padding: "0.85rem" }}>
+            {/* Compact Live Status & Drop Aim Slider */}
+            <div className="panel home-panel" style={{ padding: "0.75rem 0.9rem" }}>
+              <div style={{ fontSize: "0.88rem", marginBottom: "0.5rem" }}>
+                {isAnimating && (
+                  <strong>
+                    LIVE: {latestEvent.manager} dropping (#{latestEvent.attempt})...
+                  </strong>
+                )}
+                {!isAnimating && draftState?.phase === "deciding" && (
+                  <strong>
+                    {draftState.active_manager} landed on {latestEvent?.landed_team} — keep or
+                    retry?
+                  </strong>
+                )}
+                {!isAnimating && draftState?.phase === "retry_ready" && (
+                  <strong>
+                    {draftState.active_manager} opted to retry — click Go to drop 2nd puck!
+                  </strong>
+                )}
+                {!isAnimating && draftState?.phase === "idle" && (
+                  <span>Click board to aim, then click <strong>Go</strong> next to your name!</span>
+                )}
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem" }}>
+                <span style={{ opacity: 0.8, whiteSpace: "nowrap" }}>Aim ({dropX}px):</span>
+                <input
+                  type="range"
+                  min={30}
+                  max={BOARD.W - 30}
+                  value={dropX}
+                  onChange={(e) => setDropX(Number(e.target.value))}
+                  disabled={isBoardBusy}
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              {errorMsg && (
+                <div style={{ color: "#ef4444", marginTop: "0.4rem", fontSize: "0.85rem", fontWeight: "bold" }}>
+                  {errorMsg}
+                </div>
+              )}
+            </div>
+
+            {/* Managers List with Inline Go / Keep / Try Again Actions */}
+            <div className="panel home-panel" style={{ padding: "0.85rem" }}>
               <h2 className="home-panel-title" style={{ marginBottom: "0.5rem", fontSize: "1.05rem" }}>
-                Draft Results ({Object.keys(finalizedByManager).length}/{participants.length})
+                Season {season} Managers ({Object.keys(finalizedByManager).length}/{participants.length})
               </h2>
               <div
                 className="home-standings-list"
-                style={{ maxHeight: "calc(100vh - 375px)", overflowY: "auto" }}
+                style={{ maxHeight: "calc(100vh - 260px)", overflowY: "auto" }}
               >
                 {participants.map((p, idx) => {
                   const assignedTeam = finalizedByManager[p.manager];
                   const mgr = managersMap[p.manager];
+                  const showGo = canDropFor(p.manager);
+                  const showDecide = isDecidingFor(p.manager);
+
                   return (
                     <div
                       className="home-standings-row"
                       key={p.manager}
-                      style={{ padding: "0.35rem 0.5rem" }}
+                      onMouseEnter={() => {
+                        if (!isBoardBusy && !assignedTeam) setSelectedManager(p.manager);
+                      }}
+                      style={{ padding: "0.4rem 0.5rem", gap: "0.5rem" }}
                     >
                       <span className="home-standings-rank">{p.draft_position ?? idx + 1}</span>
                       {mgr?.discord_avatar_url && (
@@ -574,12 +664,70 @@ export default function PlinkoDraftPage() {
                           className="game-row-avatar"
                         />
                       )}
-                      <span className="home-standings-name">{p.manager}</span>
+                      <span className="home-standings-name" style={{ flex: 1 }}>
+                        {p.manager}
+                      </span>
+
                       {assignedTeam ? (
                         <TeamBadge team={assignedTeam} size="md" />
+                      ) : showDecide ? (
+                        <div style={{ display: "flex", gap: "0.35rem" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleRowDecision(p.manager, "keep")}
+                            disabled={submitting}
+                            style={{
+                              padding: "0.3rem 0.55rem",
+                              background: "#16a34a",
+                              color: "#fff",
+                              fontWeight: "bold",
+                              fontSize: "0.78rem",
+                              border: "none",
+                              borderRadius: "5px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Keep {latestEvent?.landed_team}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRowDecision(p.manager, "retry")}
+                            disabled={submitting}
+                            style={{
+                              padding: "0.3rem 0.55rem",
+                              background: "#dc2626",
+                              color: "#fff",
+                              fontWeight: "bold",
+                              fontSize: "0.78rem",
+                              border: "none",
+                              borderRadius: "5px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      ) : showGo ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRowGo(p.manager)}
+                          disabled={submitting}
+                          style={{
+                            padding: "0.32rem 0.75rem",
+                            background: draftState?.phase === "retry_ready" ? "#d97706" : "#2563eb",
+                            color: "#fff",
+                            fontWeight: "bold",
+                            fontSize: "0.82rem",
+                            border: "none",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {draftState?.phase === "retry_ready" ? "Go (2nd)" : "Go"}
+                        </button>
                       ) : (
                         <span style={{ opacity: 0.5, fontSize: "0.8rem" }}>
-                          {p.has_retry ? "Pending (2x)" : "Pending"}
+                          {p.has_retry ? "2x" : "Wait"}
                         </span>
                       )}
                     </div>
@@ -589,6 +737,7 @@ export default function PlinkoDraftPage() {
             </div>
           </div>
 
+          {/* Right Column: Full-Height No-Scroll Plinko Board */}
           <div
             className="panel home-panel"
             style={{
@@ -609,7 +758,7 @@ export default function PlinkoDraftPage() {
                 height: "calc(100vh - 95px)",
                 display: "block",
                 borderRadius: "8px",
-                cursor: canDrop ? "crosshair" : "default",
+                cursor: !isBoardBusy ? "crosshair" : "default",
               }}
             />
           </div>
