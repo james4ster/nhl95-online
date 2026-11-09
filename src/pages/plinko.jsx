@@ -291,14 +291,16 @@ export default function PlinkoDraftPage() {
             ctx.fillRect(x0, BIN_TOP, binW, H - BIN_TOP);
 
             if (
-              latestEvent &&
-              now >= eventEndMs &&
-              latestEvent.landed_team === teamAbbr &&
-              (isAnimating || draftState?.phase === "deciding")
-            ) {
-              ctx.fillStyle = "rgba(34, 197, 94, 0.35)";
-              ctx.fillRect(x0, BIN_TOP, binW, H - BIN_TOP);
-            }
+                latestEvent &&
+                now >= eventEndMs &&
+                draftState?.phase === "deciding" &&
+                latestEvent.manager === draftState?.active_manager &&
+                latestEvent.landed_team === teamAbbr
+                ) {
+                ctx.fillStyle = "rgba(34, 197, 94, 0.35)";
+                ctx.fillRect(x0, BIN_TOP, binW, H - BIN_TOP);
+                }
+
 
             if (i > 0) {
               ctx.strokeStyle = "#475569";
@@ -662,13 +664,15 @@ export default function PlinkoDraftPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem" }}>
                     <span style={{ opacity: 0.85, whiteSpace: "nowrap" }}>Aim ({dropX}px):</span>
                     <input
-                      type="range"
-                      min={30}
-                      max={BOARD.W - 30}
-                      value={dropX}
-                      onChange={(e) => setDropX(Number(e.target.value))}
-                      style={{ width: "100%" }}
+                    type="range"
+                    min={30}
+                    max={BOARD.W - 30}
+                    value={dropX}
+                    disabled={submitting || !activeAimingManager}
+                    onChange={(e) => setDropX(Number(e.target.value))}
+                    style={{ width: "100%" }}
                     />
+
                   </div>
                   <button
                     type="button"
