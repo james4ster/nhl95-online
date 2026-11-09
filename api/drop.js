@@ -1,4 +1,4 @@
-import { db, ensureState, isBusy, LEAD_MS, BUFFER_MS } from "./lib/db.js";
+import { db, ensureState, isBusy, LEAD_MS, BUFFER_MS } from "./lib/lib.js";
 import { simulateDrop, shuffle } from "./lib/sim.js";
 import { BOARD } from "../src/utils/plinkoLayout.js";
 
