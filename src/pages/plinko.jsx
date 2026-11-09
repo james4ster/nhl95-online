@@ -486,14 +486,30 @@ export default function PlinkoDraftPage() {
     const clickX = (e.clientX - rect.left) * scaleX;
     setDropX(Math.max(30, Math.min(BOARD.W - 30, Math.round(clickX))));
   }
-    const alreadyHasTeam = !!finalizedByManager[selectedManager];
-  const isBoardBusy =
-    isAnimating || (draftState?.locked_until && Date.parse(draftState.locked_until) > serverNow);
+   const isBoardBusy =
+    isAnimating ||
+    (draftState?.phase === "dropping" &&
+      draftState?.locked_until &&
+      Date.parse(draftState.locked_until) > serverNow);
 
-  const canDropFor = (mgrName) =>
+  const isClaimExpired =
+    draftState?.phase === "ready" &&
+    (!draftState?.locked_until || Date.parse(draftState.locked_until) <= serverNow);
+
+  const activeTurnManager =
+    draftState?.phase === "idle" || isClaimExpired ? null : draftState?.active_manager;
+
+  // Step 1: Can click "Go" only when board is idle (or previous Go timed out)
+  const canClaimGo = (mgrName) =>
     !finalizedByManager[mgrName] &&
     !isBoardBusy &&
-    (draftState?.phase === "idle" ||
+    (draftState?.phase === "idle" || isClaimExpired);
+
+  // Step 2: Can aim & click "Drop Puck" only for the manager who clicked Go (or Retry)
+  const canReleasePuck = (mgrName) =>
+    !finalizedByManager[mgrName] &&
+    !isBoardBusy &&
+    ((draftState?.phase === "ready" && !isClaimExpired && draftState?.active_manager === mgrName) ||
       (draftState?.phase === "retry_ready" && draftState?.active_manager === mgrName));
 
   const isDecidingFor = (mgrName) =>
@@ -501,8 +517,29 @@ export default function PlinkoDraftPage() {
     draftState?.active_manager === mgrName &&
     !isAnimating;
 
-  async function handleRowGo(mgrName) {
-    if (submitting || !canDropFor(mgrName)) return;
+  async function handleClaimGo(mgrName) {
+    if (submitting || !canClaimGo(mgrName)) return;
+    soundRef.current.unlock();
+    setSelectedManager(mgrName);
+    setSubmitting(true);
+    setErrorMsg("");
+    try {
+      const res = await fetch(API_BASE + "/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ season, manager: mgrName }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not claim turn");
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleReleaseDrop(mgrName) {
+    if (submitting || !canReleasePuck(mgrName)) return;
     soundRef.current.unlock();
     setSelectedManager(mgrName);
     setSubmitting(true);
@@ -542,6 +579,9 @@ export default function PlinkoDraftPage() {
       setSubmitting(false);
     }
   }
+  const activeAimingManager =
+    activeTurnManager && canReleasePuck(activeTurnManager) ? activeTurnManager : null;
+
   return (
     <Layout>
       <div
@@ -561,7 +601,6 @@ export default function PlinkoDraftPage() {
             alignItems: "start",
           }}
         >
-          {/* Left Column: Header + Status + Manager Rows with Go / Keep / Retry Buttons */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h1 className="home-hero-title" style={{ margin: 0, fontSize: "1.65rem" }}>
@@ -587,9 +626,8 @@ export default function PlinkoDraftPage() {
               </button>
             </div>
 
-            {/* Compact Live Status & Drop Aim Slider */}
             <div className="panel home-panel" style={{ padding: "0.75rem 0.9rem" }}>
-              <div style={{ fontSize: "0.88rem", marginBottom: "0.5rem" }}>
+              <div style={{ fontSize: "0.88rem", marginBottom: activeAimingManager ? "0.55rem" : 0 }}>
                 {isAnimating && (
                   <strong>
                     LIVE: {latestEvent.manager} dropping (#{latestEvent.attempt})...
@@ -601,28 +639,51 @@ export default function PlinkoDraftPage() {
                     retry?
                   </strong>
                 )}
-                {!isAnimating && draftState?.phase === "retry_ready" && (
+                {!isAnimating && activeAimingManager && (
                   <strong>
-                    {draftState.active_manager} opted to retry — click Go to drop 2nd puck!
+                    🎯 {activeAimingManager} is up! Aim your puck on the board, then click Drop!
                   </strong>
                 )}
-                {!isAnimating && draftState?.phase === "idle" && (
-                  <span>Click board to aim, then click <strong>Go</strong> next to your name!</span>
+                {!isAnimating && !activeTurnManager && (
+                  <span>Click <strong>Go</strong> next to your name when you are ready to drop!</span>
                 )}
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem" }}>
-                <span style={{ opacity: 0.8, whiteSpace: "nowrap" }}>Aim ({dropX}px):</span>
-                <input
-                  type="range"
-                  min={30}
-                  max={BOARD.W - 30}
-                  value={dropX}
-                  onChange={(e) => setDropX(Number(e.target.value))}
-                  disabled={isBoardBusy}
-                  style={{ width: "100%" }}
-                />
-              </div>
+              {activeAimingManager && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem" }}>
+                    <span style={{ opacity: 0.85, whiteSpace: "nowrap" }}>Aim ({dropX}px):</span>
+                    <input
+                      type="range"
+                      min={30}
+                      max={BOARD.W - 30}
+                      value={dropX}
+                      onChange={(e) => setDropX(Number(e.target.value))}
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleReleaseDrop(activeAimingManager)}
+                    disabled={submitting}
+                    style={{
+                      width: "100%",
+                      padding: "0.6rem 1rem",
+                      background: "#16a34a",
+                      color: "#fff",
+                      fontSize: "0.95rem",
+                      fontWeight: "bold",
+                      border: "none",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {draftState?.phase === "retry_ready"
+                      ? "Drop 2nd Puck (Final)"
+                      : "Drop Puck"}
+                  </button>
+                </div>
+              )}
 
               {errorMsg && (
                 <div style={{ color: "#ef4444", marginTop: "0.4rem", fontSize: "0.85rem", fontWeight: "bold" }}>
@@ -631,29 +692,31 @@ export default function PlinkoDraftPage() {
               )}
             </div>
 
-            {/* Managers List with Inline Go / Keep / Try Again Actions */}
             <div className="panel home-panel" style={{ padding: "0.85rem" }}>
               <h2 className="home-panel-title" style={{ marginBottom: "0.5rem", fontSize: "1.05rem" }}>
                 Season {season} Managers ({Object.keys(finalizedByManager).length}/{participants.length})
               </h2>
               <div
                 className="home-standings-list"
-                style={{ maxHeight: "calc(100vh - 260px)", overflowY: "auto" }}
+                style={{ maxHeight: "calc(100vh - 285px)", overflowY: "auto" }}
               >
                 {participants.map((p, idx) => {
                   const assignedTeam = finalizedByManager[p.manager];
                   const mgr = managersMap[p.manager];
-                  const showGo = canDropFor(p.manager);
+                  const showGo = canClaimGo(p.manager);
                   const showDecide = isDecidingFor(p.manager);
+                  const isCurrentTurn = activeTurnManager === p.manager;
 
                   return (
                     <div
                       className="home-standings-row"
                       key={p.manager}
-                      onMouseEnter={() => {
-                        if (!isBoardBusy && !assignedTeam) setSelectedManager(p.manager);
+                      style={{
+                        padding: "0.4rem 0.5rem",
+                        gap: "0.5rem",
+                        background: isCurrentTurn ? "rgba(37, 99, 235, 0.2)" : undefined,
+                        borderRadius: "6px",
                       }}
-                      style={{ padding: "0.4rem 0.5rem", gap: "0.5rem" }}
                     >
                       <span className="home-standings-rank">{p.draft_position ?? idx + 1}</span>
                       {mgr?.discord_avatar_url && (
@@ -707,14 +770,27 @@ export default function PlinkoDraftPage() {
                             Retry
                           </button>
                         </div>
+                      ) : isCurrentTurn ? (
+                        <span
+                          style={{
+                            padding: "0.25rem 0.55rem",
+                            background: "#2563eb",
+                            color: "#fff",
+                            fontWeight: "bold",
+                            fontSize: "0.75rem",
+                            borderRadius: "5px",
+                          }}
+                        >
+                          Dropping...
+                        </span>
                       ) : showGo ? (
                         <button
                           type="button"
-                          onClick={() => handleRowGo(p.manager)}
+                          onClick={() => handleClaimGo(p.manager)}
                           disabled={submitting}
                           style={{
                             padding: "0.32rem 0.75rem",
-                            background: draftState?.phase === "retry_ready" ? "#d97706" : "#2563eb",
+                            background: "#2563eb",
                             color: "#fff",
                             fontWeight: "bold",
                             fontSize: "0.82rem",
@@ -723,12 +799,10 @@ export default function PlinkoDraftPage() {
                             cursor: "pointer",
                           }}
                         >
-                          {draftState?.phase === "retry_ready" ? "Go (2nd)" : "Go"}
+                          Go
                         </button>
                       ) : (
-                        <span style={{ opacity: 0.5, fontSize: "0.8rem" }}>
-                          {p.has_retry ? "2x" : "Wait"}
-                        </span>
+                        <span style={{ opacity: 0.45, fontSize: "0.78rem" }}>Locked</span>
                       )}
                     </div>
                   );
@@ -737,7 +811,6 @@ export default function PlinkoDraftPage() {
             </div>
           </div>
 
-          {/* Right Column: Full-Height No-Scroll Plinko Board */}
           <div
             className="panel home-panel"
             style={{
@@ -758,7 +831,7 @@ export default function PlinkoDraftPage() {
                 height: "calc(100vh - 95px)",
                 display: "block",
                 borderRadius: "8px",
-                cursor: !isBoardBusy ? "crosshair" : "default",
+                cursor: activeAimingManager ? "crosshair" : "default",
               }}
             />
           </div>

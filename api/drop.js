@@ -32,9 +32,9 @@ export default async function handler(req, res) {
 
   const st = await ensureState(season);
   const mayDrop =
-    !isBusy(st) &&
-    (st.phase === "idle" || (st.phase === "retry_ready" && st.active_manager === manager));
-  if (!mayDrop) return res.status(409).json({ error: "Another drop is in progress, or it's not your turn" });
+    (st.phase === "ready" && st.active_manager === manager) ||
+    (!isBusy(st) && st.phase === "retry_ready" && st.active_manager === manager);
+  if (!mayDrop) return res.status(409).json({ error: "Click Go next to your name first, or wait for your turn." });
 
   const now = Date.now();
   const { data: claimed } = await db
