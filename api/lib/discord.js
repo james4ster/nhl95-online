@@ -58,7 +58,7 @@ export async function notifyTurnStarted({ season, manager, req }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: `<@582240735793774618> 🚨 **${manager}** just clicked **Go** and is about to drop in **Season ${season} Team Plinko**!\n👀 Watch live: ${watchUrl}`,
+        content: `<@582240735793774618> 🚨 **${manager}** is about to **drop** and is about to drop a puck yinz for **Season ${season} **!\n👀 Watch live: ${watchUrl}`,
         allowed_mentions: { parse: ["users"] },
       }),
     });

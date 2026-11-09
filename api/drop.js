@@ -85,15 +85,16 @@ export default async function handler(req, res) {
     }).eq("season", season);
 
 
-      if (isFinal) {
+        if (isFinal) {
     await notifyTeamFinalized({
       season,
       manager,
-      team: landedTeam,
+      team: landed,
       req,
       delayMs: sim.durationMs + 1500,
     });
   }
+
 
 
     return res.status(200).json({ ok: true });
