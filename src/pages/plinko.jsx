@@ -11,6 +11,21 @@ const API_BASE = "/api";
 const getTeamLogoUrl = (teamAbbr) =>
   nhlLogos[teamAbbr?.toUpperCase?.()] || nhlLogos[teamAbbr] || defaultTeamLogo;
 
+const resolveDiscordAvatar = (mgr) => {
+  if (!mgr) return null;
+  const raw = mgr.discord_avatar_url;
+  if (raw && raw.startsWith("http")) return raw;
+  if (raw && mgr.discord_id) {
+    const ext = raw.startsWith("a_") ? "gif" : "png";
+    return `https://discordapp.com{mgr.discord_id}/${raw}.${ext}?size=128`;
+  }
+  if (mgr.discord_id) {
+    const idx = Number(BigInt(mgr.discord_id) >> 22n) % 6;
+    return `https://discordapp.com{idx}.png`;
+  }
+  return null;
+};
+
 export default function PlinkoDraftPage() {
   const [season, setSeason] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -31,17 +46,17 @@ export default function PlinkoDraftPage() {
   const pegs = useMemo(() => buildPegs(), []);
 
   const getCachedImage = (url) => {
-    if (!url) return null;
-    if (!imagesRef.current[url]) {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = url;
-      imagesRef.current[url] = img;
-    }
-    return imagesRef.current[url].complete && imagesRef.current[url].naturalWidth > 0
-      ? imagesRef.current[url]
-      : null;
-  };
+  if (!url) return null;
+  if (!imagesRef.current[url]) {
+    const img = new Image();
+    img.src = url;
+    imagesRef.current[url] = img;
+  }
+  return imagesRef.current[url].complete && imagesRef.current[url].naturalWidth > 0
+    ? imagesRef.current[url]
+    : null;
+};
+
 
   useEffect(() => {
     let mounted = true;
@@ -223,19 +238,22 @@ export default function PlinkoDraftPage() {
             }
 
             const logoImg = getCachedImage(getTeamLogoUrl(teamAbbr));
-            const iconSize = Math.min(binW - 6, 36);
+            const iconSize = Math.max(28, Math.min(binW + 10, 48));
             const cx = x0 + binW / 2;
-            const cy = BIN_TOP + (H - BIN_TOP) / 2;
+            // Stagger even/odd rows slightly when there are > 20 bins so big logos don't clip
+            const staggerY = n > 20 ? (i % 2 === 0 ? -18 : 18) : 0;
+            const cy = BIN_TOP + (H - BIN_TOP) / 2 + staggerY;
 
-            if (logoImg && iconSize >= 14) {
-              ctx.drawImage(logoImg, cx - iconSize / 2, cy - iconSize / 2, iconSize, iconSize);
+            if (logoImg) {
+            ctx.drawImage(logoImg, cx - iconSize / 2, cy - iconSize / 2, iconSize, iconSize);
             } else {
-              ctx.fillStyle = "#f8fafc";
-              ctx.font = "bold 11px sans-serif";
-              ctx.textAlign = "center";
-              ctx.textBaseline = "middle";
-              ctx.fillText(teamAbbr, cx, cy);
+            ctx.fillStyle = "#f8fafc";
+            ctx.font = "bold 11px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(teamAbbr, cx, cy);
             }
+
           }
         }
 
@@ -396,7 +414,11 @@ export default function PlinkoDraftPage() {
 
   return (
     <Layout>
-      <div className="page plinko-draft-page">
+      <div
+        className="home-grid"
+        style={{ display: "grid", gridTemplateColumns: "minmax(0, 2.2fr) minmax(280px, 1fr)", gap: "1.25rem", alignItems: "start" }}
+        >
+
         <div className="home-hero">
           <h1 className="home-hero-title">Season {season} NHL Team Draft</h1>
         </div>

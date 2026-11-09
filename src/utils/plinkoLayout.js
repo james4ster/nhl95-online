@@ -2,8 +2,8 @@
 export const BOARD = {
   W: 936,
   H: 1100,
-  BIN_TOP: 1020,
-  PUCK_R: 11,
+  BIN_TOP: 980,      // Taller bins (120px high) for larger NHL logos
+  PUCK_R: 15,        // Larger puck (30px diameter) so Discord avatars are clearly visible
   PEG_R: 5,
   DROP_Y: 40,
   FIRST_ROW_Y: 150,
