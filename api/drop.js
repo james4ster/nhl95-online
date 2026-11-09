@@ -78,9 +78,11 @@ export default async function handler(req, res) {
     await db.from("draft_state").update({
       phase: isFinal ? "idle" : "deciding",
       active_manager: manager,
+      bin_order: isFinal ? null : binOrder,
       locked_until: new Date(startedAt.getTime() + sim.durationMs + BUFFER_MS).toISOString(),
       version: claimed.version + 1,
     }).eq("season", season);
+
 
     return res.status(200).json({ ok: true });
   } catch (e) {
