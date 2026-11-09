@@ -211,18 +211,23 @@ export default function PlinkoDraftPage() {
   }, [season]);
 
   const latestEvent = events[events.length - 1] || null;
-  const finalizedByManager = useMemo(() => {
-    const map = {};
-    events.forEach((e) => {
-      if (e.is_final) map[e.manager] = e.landed_team;
-    });
-    return map;
-  }, [events]);
-
   const takenTeams = useMemo(() => new Set(Object.values(finalizedByManager)), [finalizedByManager]);
   const availableTeams = useMemo(() => teams.filter((t) => !takenTeams.has(t)), [teams, takenTeams]);
 
   const serverNow = nowTick + clockOffset;
+
+  const finalizedByManager = useMemo(() => {
+    const map = {};
+    events.forEach((e) => {
+      const finished = Date.parse(e.started_at) + e.duration_ms <= serverNow;
+      if (e.is_final && finished) {
+        map[e.manager] = e.landed_team;
+      }
+    });
+    return map;
+  }, [events, serverNow]);
+
+
   const eventStartMs = latestEvent ? Date.parse(latestEvent.started_at) : 0;
   const eventEndMs = latestEvent ? eventStartMs + latestEvent.duration_ms : 0;
   const isAnimating = latestEvent && serverNow < eventEndMs;
