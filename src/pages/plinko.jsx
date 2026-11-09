@@ -210,10 +210,6 @@ export default function PlinkoDraftPage() {
     };
   }, [season]);
 
-  const latestEvent = events[events.length - 1] || null;
-  const takenTeams = useMemo(() => new Set(Object.values(finalizedByManager)), [finalizedByManager]);
-  const availableTeams = useMemo(() => teams.filter((t) => !takenTeams.has(t)), [teams, takenTeams]);
-
   const serverNow = nowTick + clockOffset;
 
   const finalizedByManager = useMemo(() => {
@@ -226,7 +222,10 @@ export default function PlinkoDraftPage() {
     });
     return map;
   }, [events, serverNow]);
-
+  
+  const latestEvent = events[events.length - 1] || null;
+  const takenTeams = useMemo(() => new Set(Object.values(finalizedByManager)), [finalizedByManager]);
+  const availableTeams = useMemo(() => teams.filter((t) => !takenTeams.has(t)), [teams, takenTeams]);
 
   const eventStartMs = latestEvent ? Date.parse(latestEvent.started_at) : 0;
   const eventEndMs = latestEvent ? eventStartMs + latestEvent.duration_ms : 0;
