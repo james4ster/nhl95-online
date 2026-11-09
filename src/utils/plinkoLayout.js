@@ -1,14 +1,14 @@
 // Shared by the browser (drawing) and the Vercel API (physics sim). Units are pixels.
 export const BOARD = {
   W: 936,
-  H: 1100,
-  BIN_TOP: 980,      // Taller bins (120px high) for larger NHL logos
-  PUCK_R: 15,        // Larger puck (30px diameter) so Discord avatars are clearly visible
+  H: 890,
+  BIN_TOP: 790,      // Last peg row is at y = 738 (52px clean gap above bins)
+  PUCK_R: 15,
   PEG_R: 5,
-  DROP_Y: 40,
-  FIRST_ROW_Y: 150,
-  ROW_DY: 46,
-  ROWS: 19,
+  DROP_Y: 36,
+  FIRST_ROW_Y: 108,
+  ROW_DY: 42,
+  ROWS: 16,
 };
 
 export const FRAME_MS = 1000 / 30; // trajectory sample rate

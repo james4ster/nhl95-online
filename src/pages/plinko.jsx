@@ -26,6 +26,56 @@ const resolveDiscordAvatar = (mgr) => {
   return null;
 };
 
+// Lightweight Web Audio API sound effects (no external audio files needed)
+function createSoundEngine() {
+  let ctx = null;
+  const ensureCtx = () => {
+    if (!ctx && typeof window !== "undefined") {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) ctx = new AudioCtx();
+    }
+    if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+    return ctx;
+  };
+
+  return {
+    unlock: () => ensureCtx(),
+    playPegHit: (pitchBoost = 0) => {
+      const ac = ensureCtx();
+      if (!ac) return;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = "triangle";
+      const baseFreq = 520 + Math.min(400, pitchBoost * 18);
+      osc.frequency.setValueAtTime(baseFreq, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, ac.currentTime + 0.055);
+      gain.gain.setValueAtTime(0.14, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.055);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.06);
+    },
+    playLanded: () => {
+      const ac = ensureCtx();
+      if (!ac) return;
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = "sine";
+        const t0 = ac.currentTime + idx * 0.075;
+        osc.frequency.setValueAtTime(freq, t0);
+        gain.gain.setValueAtTime(0.16, t0);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.28);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.3);
+      });
+    },
+  };
+}
+
 export default function PlinkoDraftPage() {
   const [season, setSeason] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -40,11 +90,15 @@ export default function PlinkoDraftPage() {
   const [nowTick, setNowTick] = useState(Date.now());
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   const canvasRef = useRef(null);
   const imagesRef = useRef({});
+  const soundRef = useRef(null);
+  const soundStateRef = useRef({ eventId: null, lastTickMs: 0, prevVxSign: 0, landedPlayed: false });
   const pegs = useMemo(() => buildPegs(), []);
 
+  if (!soundRef.current) soundRef.current = createSoundEngine();
   const getCachedImage = (url) => {
     if (!url) return null;
     if (!imagesRef.current[url]) {
@@ -57,7 +111,7 @@ export default function PlinkoDraftPage() {
       : null;
   };
 
-    useEffect(() => {
+  useEffect(() => {
     let mounted = true;
 
     async function init() {
@@ -248,7 +302,7 @@ export default function PlinkoDraftPage() {
             }
 
             const logoImg = getCachedImage(getTeamLogoUrl(teamAbbr));
-            const iconSize = Math.min(binW - 3, 44);
+            const iconSize = Math.min(binW - 3, 46);
             const cx = x0 + binW / 2;
             const cy = BIN_TOP + (H - BIN_TOP) / 2;
 
@@ -277,6 +331,15 @@ export default function PlinkoDraftPage() {
           const traj = latestEvent.trajectory;
           const totalFrames = traj.length / 3;
 
+          if (soundStateRef.current.eventId !== latestEvent.id) {
+            soundStateRef.current = {
+              eventId: latestEvent.id,
+              lastTickMs: 0,
+              prevVxSign: 0,
+              landedPlayed: now >= eventEndMs,
+            };
+          }
+
           if (now <= eventStartMs) {
             puckX = traj[0];
             puckY = traj[1];
@@ -286,6 +349,10 @@ export default function PlinkoDraftPage() {
             puckX = traj[last];
             puckY = traj[last + 1];
             puckAngle = traj[last + 2];
+            if (soundEnabled && !soundStateRef.current.landedPlayed && now - eventEndMs < 1000) {
+              soundStateRef.current.landedPlayed = true;
+              soundRef.current.playLanded();
+            }
           } else {
             const exactFrame = (now - eventStartMs) / FRAME_MS;
             const f0 = Math.min(totalFrames - 1, Math.floor(exactFrame));
@@ -297,6 +364,21 @@ export default function PlinkoDraftPage() {
             puckX = traj[i0] + (traj[i1] - traj[i0]) * alpha;
             puckY = traj[i0 + 1] + (traj[i1 + 1] - traj[i0 + 1]) * alpha;
             puckAngle = traj[i0 + 2] + (traj[i1 + 2] - traj[i0 + 2]) * alpha;
+
+            // Trigger subtle peg bounce sound when horizontal velocity flips sign
+            const vx = traj[i1] - traj[i0];
+            const vxSign = Math.abs(vx) > 0.25 ? Math.sign(vx) : 0;
+            if (
+              soundEnabled &&
+              vxSign !== 0 &&
+              vxSign !== soundStateRef.current.prevVxSign &&
+              now - soundStateRef.current.lastTickMs > 75 &&
+              puckY < BIN_TOP
+            ) {
+              soundStateRef.current.lastTickMs = now;
+              soundRef.current.playPegHit(Math.floor(puckY / 45));
+            }
+            if (vxSign !== 0) soundStateRef.current.prevVxSign = vxSign;
           }
         }
 
@@ -354,10 +436,12 @@ export default function PlinkoDraftPage() {
     dropX,
     selectedManager,
     managersMap,
+    soundEnabled,
   ]);
 
   async function handleDrop() {
     if (!selectedManager || submitting) return;
+    soundRef.current.unlock();
     setSubmitting(true);
     setErrorMsg("");
     try {
@@ -377,6 +461,7 @@ export default function PlinkoDraftPage() {
 
   async function handleDecision(decision) {
     if (!selectedManager || submitting) return;
+    soundRef.current.unlock();
     setSubmitting(true);
     setErrorMsg("");
     try {
@@ -395,6 +480,7 @@ export default function PlinkoDraftPage() {
   }
 
   function handleCanvasClick(e) {
+    soundRef.current.unlock();
     const rect = canvasRef.current.getBoundingClientRect();
     const scaleX = BOARD.W / rect.width;
     const clickX = (e.clientX - rect.left) * scaleX;
@@ -421,198 +507,64 @@ export default function PlinkoDraftPage() {
     <Layout>
       <div
         className="page plinko-draft-page"
-        style={{ maxWidth: "1520px", width: "100%", margin: "0 auto", padding: "0 1.25rem 2rem" }}
+        style={{
+          maxWidth: "1640px",
+          width: "100%",
+          margin: "0 auto",
+          padding: "0.75rem 1.25rem 1rem",
+        }}
       >
-        <div className="home-hero" style={{ marginBottom: "1rem" }}>
-          <h1 className="home-hero-title">Season {season} NHL Team Draft</h1>
-        </div>
-
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 2.3fr) minmax(320px, 1fr)",
+            gridTemplateColumns: "minmax(310px, 380px) minmax(0, 1fr)",
             gap: "1.25rem",
             alignItems: "start",
           }}
         >
-          <div className="panel home-panel" style={{ padding: "0.75rem" }}>
-            <canvas
-              ref={canvasRef}
-              width={BOARD.W}
-              height={BOARD.H}
-              onClick={handleCanvasClick}
-              style={{
-                width: "100%",
-                height: "auto",
-                display: "block",
-                borderRadius: "8px",
-                cursor: canDrop ? "crosshair" : "default",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            <div className="panel home-panel" style={{ padding: "1.1rem" }}>
-              <h2 className="home-panel-title" style={{ marginBottom: "0.75rem" }}>
-                Drop Controls
-              </h2>
-
-              <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "0.35rem" }}>
-                Select Manager
-              </label>
-              <select
-                value={selectedManager}
-                onChange={(e) => {
-                  setSelectedManager(e.target.value);
-                  setErrorMsg("");
+          {/* Left Column: Header + Controls + Team Results */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h1 className="home-hero-title" style={{ margin: 0, fontSize: "1.65rem" }}>
+                Team Plinko
+              </h1>
+              <button
+                type="button"
+                onClick={() => {
+                  soundRef.current.unlock();
+                  setSoundEnabled((v) => !v);
                 }}
-                style={{ width: "100%", padding: "0.55rem", borderRadius: "6px", marginBottom: "0.85rem" }}
-              >
-                <option value="">-- Choose Your Name --</option>
-                {participants.map((p) => (
-                  <option
-                    key={p.manager}
-                    value={p.manager}
-                    disabled={!!finalizedByManager[p.manager]}
-                  >
-                    {p.manager}
-                    {finalizedByManager[p.manager]
-                      ? " (" + finalizedByManager[p.manager] + ")"
-                      : p.has_retry
-                      ? " [Has Retry]"
-                      : ""}
-                  </option>
-                ))}
-              </select>
-
-              {selectedManager && !alreadyHasTeam && (
-                <div style={{ marginBottom: "0.85rem" }}>
-                  <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "0.25rem" }}>
-                    Drop Position (or click board): <strong>{dropX}px</strong>
-                  </label>
-                  <input
-                    type="range"
-                    min={30}
-                    max={BOARD.W - 30}
-                    value={dropX}
-                    onChange={(e) => setDropX(Number(e.target.value))}
-                    disabled={!canDrop}
-                    style={{ width: "100%" }}
-                  />
-                </div>
-              )}
-
-              {canDrop && (
-                <button
-                  onClick={handleDrop}
-                  disabled={submitting}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem 1rem",
-                    background: "#2563eb",
-                    color: "#fff",
-                    fontSize: "1rem",
-                    fontWeight: "bold",
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                  }}
-                >
-                  {draftState?.phase === "retry_ready" ? "Drop 2nd Puck (Final)" : "Drop Puck"}
-                </button>
-              )}
-
-              {showDecisionButtons && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <button
-                    onClick={() => handleDecision("keep")}
-                    disabled={submitting}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem 1rem",
-                      background: "#16a34a",
-                      color: "#fff",
-                      fontSize: "1rem",
-                      fontWeight: "bold",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Keep {latestEvent?.landed_team}
-                  </button>
-                  <button
-                    onClick={() => handleDecision("retry")}
-                    disabled={submitting}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem 1rem",
-                      background: "#dc2626",
-                      color: "#fff",
-                      fontSize: "0.95rem",
-                      fontWeight: "bold",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Try Again (Must Keep 2nd!)
-                  </button>
-                </div>
-              )}
-
-              <div
                 style={{
-                  marginTop: "0.85rem",
-                  padding: "0.65rem",
+                  padding: "0.35rem 0.65rem",
                   borderRadius: "6px",
-                  background: "rgba(15, 23, 42, 0.55)",
-                  fontSize: "0.9rem",
+                  border: "1px solid rgba(148, 163, 184, 0.35)",
+                  background: "rgba(15, 23, 42, 0.75)",
+                  color: "#f8fafc",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
                 }}
               >
-                {isAnimating && (
-                  <strong>
-                    LIVE: {latestEvent.manager} is dropping (Attempt #{latestEvent.attempt})...
-                  </strong>
-                )}
-                {!isAnimating && draftState?.phase === "deciding" && (
-                  <strong>
-                    {draftState.active_manager} landed on {latestEvent?.landed_team} — deciding
-                    whether to keep or retry...
-                  </strong>
-                )}
-                {!isAnimating && draftState?.phase === "retry_ready" && (
-                  <strong>
-                    {draftState.active_manager} opted for a retry! Waiting for their 2nd drop...
-                  </strong>
-                )}
-                {!isAnimating && draftState?.phase === "idle" && (
-                  <span>Board is open. Select your name to drop!</span>
-                )}
-                {selectedParticipant && !alreadyHasTeam && (
-                  <div style={{ marginTop: "0.35rem", opacity: 0.85 }}>
-                    Retry token: <strong>{selectedParticipant.has_retry ? "Yes" : "No"}</strong>
-                  </div>
-                )}
-              </div>
-
-              {errorMsg && (
-                <div style={{ color: "#ef4444", marginTop: "0.5rem", fontWeight: "bold" }}>
-                  {errorMsg}
-                </div>
-              )}
+                {soundEnabled ? "🔊 Sound On" : "🔇 Muted"}
+              </button>
             </div>
 
-            <div className="panel home-panel">
-              <h2 className="home-panel-title">
+                       <div className="panel home-panel" style={{ padding: "0.85rem" }}>
+              <h2 className="home-panel-title" style={{ marginBottom: "0.5rem", fontSize: "1.05rem" }}>
                 Draft Results ({Object.keys(finalizedByManager).length}/{participants.length})
               </h2>
-              <div className="home-standings-list">
+              <div
+                className="home-standings-list"
+                style={{ maxHeight: "calc(100vh - 375px)", overflowY: "auto" }}
+              >
                 {participants.map((p, idx) => {
                   const assignedTeam = finalizedByManager[p.manager];
                   const mgr = managersMap[p.manager];
                   return (
-                    <div className="home-standings-row" key={p.manager}>
+                    <div
+                      className="home-standings-row"
+                      key={p.manager}
+                      style={{ padding: "0.35rem 0.5rem" }}
+                    >
                       <span className="home-standings-rank">{p.draft_position ?? idx + 1}</span>
                       {mgr?.discord_avatar_url && (
                         <ManagerAvatar
@@ -624,9 +576,9 @@ export default function PlinkoDraftPage() {
                       )}
                       <span className="home-standings-name">{p.manager}</span>
                       {assignedTeam ? (
-                        <TeamBadge team={assignedTeam} size="lg" />
+                        <TeamBadge team={assignedTeam} size="md" />
                       ) : (
-                        <span style={{ opacity: 0.5, fontSize: "0.85rem" }}>
+                        <span style={{ opacity: 0.5, fontSize: "0.8rem" }}>
                           {p.has_retry ? "Pending (2x)" : "Pending"}
                         </span>
                       )}
@@ -635,6 +587,31 @@ export default function PlinkoDraftPage() {
                 })}
               </div>
             </div>
+          </div>
+
+          <div
+            className="panel home-panel"
+            style={{
+              padding: "0.65rem",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <canvas
+              ref={canvasRef}
+              width={BOARD.W}
+              height={BOARD.H}
+              onClick={handleCanvasClick}
+              style={{
+                width: "auto",
+                maxWidth: "100%",
+                height: "calc(100vh - 95px)",
+                display: "block",
+                borderRadius: "8px",
+                cursor: canDrop ? "crosshair" : "default",
+              }}
+            />
           </div>
         </div>
       </div>
