@@ -25,17 +25,29 @@ export function simulateDrop({ binOrder, dropX }) {
 
   const world = new World({ gravity: new Vec2(0, GRAVITY) });
   const fixed = world.createBody();
-  // Higher restitution (0.68) and low friction (0.04) for lively side-to-side bounces
   const mat = { friction: 0.04, restitution: 0.68 };
 
   for (const p of buildPegs()) {
     fixed.createFixture({ shape: new Circle(new Vec2(p.x * M, p.y * M), PEG_R * M), ...mat });
   }
-  // Walls + floor (high restitution on walls to kick puck back inward)
+
+  // Outer walls + floor
   const wallMat = { friction: 0.02, restitution: 0.78 };
   fixed.createFixture({ shape: new Box(0.05, (H * M) / 2, new Vec2(-0.05, (H * M) / 2)), ...wallMat });
   fixed.createFixture({ shape: new Box(0.05, (H * M) / 2, new Vec2(W * M + 0.05, (H * M) / 2)), ...wallMat });
   fixed.createFixture({ shape: new Box((W * M) / 2, 0.05, new Vec2((W * M) / 2, H * M + 0.05)), ...mat });
+
+  // Angled side-wall bumpers to kick edge pucks back into the pegs
+  for (let y = 200; y <= 700; y += 125) {
+    fixed.createFixture({
+      shape: new Box(0.18, 0.04, new Vec2(0.08, y * M), 0.55),
+      ...wallMat,
+    });
+    fixed.createFixture({
+      shape: new Box(0.18, 0.04, new Vec2((W - 8) * M, y * M), -0.55),
+      ...wallMat,
+    });
+  }
 
   // Bin dividers with rounded caps
   const hh = ((H - BIN_TOP) * M) / 2;

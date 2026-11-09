@@ -133,8 +133,11 @@ export default function PlinkoDraftPage() {
         .single();
 
       const activeSeason = currentSeason?.season;
+      
       if (!activeSeason || !mounted) return;
       setSeason(activeSeason);
+
+      getCachedImage("/images/logo.jpg");
 
       const [teamsRes, partRes, mgrRes, evRes, stateRes] = await Promise.all([
         supabase.from("draft_teams").select("nhl_team").eq("season", activeSeason),
@@ -261,6 +264,80 @@ export default function PlinkoDraftPage() {
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = "#0b1324";
         ctx.fillRect(0, 0, W, H);
+
+                // 1. Subtle PNPL Logo Watermark in Center
+        const leagueLogo = getCachedImage("/images/logo.jpg");
+        if (leagueLogo) {
+          ctx.save();
+          ctx.globalAlpha = 0.14;
+          const logoSize = 340;
+          const cxLogo = W / 2;
+          const cyLogo = (BIN_TOP + 60) / 2;
+          ctx.beginPath();
+          ctx.arc(cxLogo, cyLogo, logoSize / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(
+            leagueLogo,
+            cxLogo - logoSize / 2,
+            cyLogo - logoSize / 2,
+            logoSize,
+            logoSize
+          );
+          ctx.restore();
+        }
+
+        // 2. Visible Angled Side-Wall Bumpers
+        ctx.fillStyle = "#475569";
+        for (let by = 200; by <= 700; by += 125) {
+          ctx.beginPath();
+          ctx.moveTo(0, by - 14);
+          ctx.lineTo(22, by + 4);
+          ctx.lineTo(0, by + 16);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(W, by - 14);
+          ctx.lineTo(W - 22, by + 4);
+          ctx.lineTo(W, by + 16);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        // 3. Twinkling Christmas Lights Along Top & Sides
+        const bulbColors = ["#ef4444", "#22c55e", "#facc15", "#38bdf8"];
+        const flashStep = Math.floor(now / (isAnimating ? 250 : 650));
+        const bulbs = [];
+        for (let bx = 24; bx <= W - 24; bx += 36) {
+          bulbs.push({ x: bx, y: 12 });
+        }
+        for (let by = 48; by <= BIN_TOP - 16; by += 42) {
+          bulbs.push({ x: 8, y: by });
+          bulbs.push({ x: W - 8, y: by });
+        }
+
+        ctx.strokeStyle = "#1e293b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(16, 12);
+        ctx.lineTo(W - 16, 12);
+        ctx.stroke();
+
+        bulbs.forEach((b, idx) => {
+          const color = bulbColors[idx % bulbColors.length];
+          const isLit = (idx + flashStep) % 2 === 0;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = isLit ? color : "rgba(148, 163, 184, 0.25)";
+          if (isLit) {
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+          }
+          ctx.fill();
+          ctx.restore();
+        });
+
 
         ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
         ctx.lineWidth = 2;
