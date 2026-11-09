@@ -50,7 +50,14 @@ export default async function handler(req, res) {
   if (!claimed) return res.status(409).json({ error: "Someone else just dropped. Try again." });
 
   try {
-    const binOrder = shuffle(pool);
+    const validSet = new Set(pool);
+    const binOrder =
+      Array.isArray(st.bin_order) &&
+      st.bin_order.length === pool.length &&
+      st.bin_order.every((t) => validSet.has(t))
+        ? st.bin_order
+        : shuffle(pool);
+
     const x0 = Math.max(30, Math.min(BOARD.W - 30, Number(dropX) || BOARD.W / 2));
     const sim = simulateDrop({ binOrder, dropX: x0 });
     const landed = binOrder[sim.binIndex];

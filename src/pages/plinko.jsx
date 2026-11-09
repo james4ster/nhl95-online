@@ -228,11 +228,19 @@ export default function PlinkoDraftPage() {
   const isAnimating = latestEvent && serverNow < eventEndMs;
 
   const activeBins = useMemo(() => {
-    if (latestEvent && (isAnimating || draftState?.phase === "deciding")) {
-      return latestEvent.bin_order;
-    }
-    return availableTeams;
-  }, [latestEvent, isAnimating, draftState?.phase, availableTeams]);
+  if (latestEvent && (isAnimating || draftState?.phase === "deciding")) {
+    return latestEvent.bin_order;
+  }
+  if (
+    (draftState?.phase === "ready" || draftState?.phase === "retry_ready") &&
+    Array.isArray(draftState?.bin_order) &&
+    draftState.bin_order.length === availableTeams.length
+  ) {
+    return draftState.bin_order;
+  }
+  return availableTeams;
+}, [latestEvent, isAnimating, draftState?.phase, draftState?.bin_order, availableTeams]);
+
   useEffect(() => {
     let rafId;
 
