@@ -304,31 +304,24 @@ export default function PlinkoDraftPage() {
           ctx.fill();
         }
 
-        // 3. Twinkling Christmas Lights Along Top & Sides
+                // 3. Twinkling Christmas Lights Along Top Edge
         const bulbColors = ["#ef4444", "#22c55e", "#facc15", "#38bdf8"];
         const flashStep = Math.floor(now / (isAnimating ? 250 : 650));
-        const bulbs = [];
-        for (let bx = 24; bx <= W - 24; bx += 36) {
-          bulbs.push({ x: bx, y: 12 });
-        }
-        for (let by = 48; by <= BIN_TOP - 16; by += 42) {
-          bulbs.push({ x: 8, y: by });
-          bulbs.push({ x: W - 8, y: by });
-        }
 
         ctx.strokeStyle = "#1e293b";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(16, 12);
-        ctx.lineTo(W - 16, 12);
+        ctx.moveTo(16, 8);
+        ctx.lineTo(W - 16, 8);
         ctx.stroke();
 
-        bulbs.forEach((b, idx) => {
+        let idx = 0;
+        for (let bx = 24; bx <= W - 24; bx += 36) {
           const color = bulbColors[idx % bulbColors.length];
           const isLit = (idx + flashStep) % 2 === 0;
           ctx.save();
           ctx.beginPath();
-          ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
+          ctx.arc(bx, 8, 4.5, 0, Math.PI * 2);
           ctx.fillStyle = isLit ? color : "rgba(148, 163, 184, 0.25)";
           if (isLit) {
             ctx.shadowColor = color;
@@ -336,7 +329,9 @@ export default function PlinkoDraftPage() {
           }
           ctx.fill();
           ctx.restore();
-        });
+          idx++;
+        }
+
 
 
         ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
@@ -905,15 +900,48 @@ export default function PlinkoDraftPage() {
             </div>
           </div>
 
-          <div
+                    <div
             className="panel home-panel"
             style={{
-              padding: "0.65rem",
+              padding: "0.65rem 1.35rem",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
+              position: "relative",
             }}
           >
+            {/* Left Outer Frame Lights */}
+            <div
+              style={{
+                position: "absolute",
+                left: "6px",
+                top: "18px",
+                bottom: "18px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                pointerEvents: "none",
+              }}
+            >
+              {Array.from({ length: 18 }).map((_, i) => {
+                const colors = ["#ef4444", "#22c55e", "#facc15", "#38bdf8"];
+                const color = colors[i % colors.length];
+                const isLit = (i + Math.floor(nowTick / (isAnimating ? 250 : 650))) % 2 === 0;
+                return (
+                  <span
+                    key={i}
+                    style={{
+                      width: "9px",
+                      height: "9px",
+                      borderRadius: "50%",
+                      background: isLit ? color : "rgba(148, 163, 184, 0.25)",
+                      boxShadow: isLit ? `0 0 8px ${color}` : "none",
+                    }}
+                  />
+                );
+              })}
+            </div>
+
             <canvas
               ref={canvasRef}
               width={BOARD.W}
@@ -928,7 +956,40 @@ export default function PlinkoDraftPage() {
                 cursor: activeAimingManager ? "crosshair" : "default",
               }}
             />
+
+            {/* Right Outer Frame Lights */}
+            <div
+              style={{
+                position: "absolute",
+                right: "6px",
+                top: "18px",
+                bottom: "18px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                pointerEvents: "none",
+              }}
+            >
+              {Array.from({ length: 18 }).map((_, i) => {
+                const colors = ["#ef4444", "#22c55e", "#facc15", "#38bdf8"];
+                const color = colors[(i + 2) % colors.length];
+                const isLit = (i + Math.floor(nowTick / (isAnimating ? 250 : 650))) % 2 === 0;
+                return (
+                  <span
+                    key={i}
+                    style={{
+                      width: "9px",
+                      height: "9px",
+                      borderRadius: "50%",
+                      background: isLit ? color : "rgba(148, 163, 184, 0.25)",
+                      boxShadow: isLit ? `0 0 8px ${color}` : "none",
+                    }}
+                  />
+                );
+              })}
+            </div>
           </div>
+
         </div>
       </div>
     </Layout>
