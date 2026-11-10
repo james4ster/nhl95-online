@@ -429,46 +429,51 @@ export default function StandingsPage() {
               </thead>
               <tbody>
                 {sortedStandings.map((row, idx) => (
-                  <tr
-                    key={row.nhl_team}
-                    className={isNaturalOrder && row.rank === maxPlayoffTeams ? "standings-cutoff-row" : ""}
-                  >
-                    <td className={`standings-rank ${row.playoffStatus ? `is-${row.playoffStatus}` : ""}`}>
-                      {idx + 1}
-                      {isNaturalOrder && row.rank === maxPlayoffTeams && (
-                        <span className="standings-cutoff-label">Cutoff</span>
-                      )}
-                    </td>
-                    <td>
-                      <span
-                        className={`standings-team-badge-wrap ${row.playoffStatus ? `is-${row.playoffStatus}` : ""}`}
-                        title={
-                          row.playoffStatus === "clinched"
-                            ? "Clinched a playoff spot"
-                            : row.playoffStatus === "eliminated"
-                            ? "Eliminated from playoff contention"
-                            : undefined
-                        }
-                      >
-                        <TeamBadge team={row.nhl_team} size="lg" />
-                      </span>
-                    </td>
-                    <td className="standings-manager">{row.manager}</td>
-                    <td>{row.gp}</td>
-                    <td>{row.wins}</td>
-                    <td>{row.losses}</td>
-                    <td>{row.ties}</td>
-                    <td className="standings-pts">{row.points}</td>
-                    <td className="col-extra">{row.goals_for}</td>
-                    <td className="col-extra">{row.goals_against}</td>
-                    <td className="col-extra">{row.goal_diff > 0 ? `+${row.goal_diff}` : row.goal_diff}</td>
-                    <td className="col-extra">{row.gf_per_game.toFixed(2)}</td>
-                    <td className="col-extra">{row.ga_per_game.toFixed(2)}</td>
-                    <td className="col-extra">{row.tpr}</td>
-                    <td className="col-extra">{row.max_pts}</td>
-                    <td className={`col-extra standings-streak ${streakClass(row.streak)}`}> {row.streak || "–"}</td>
-                  </tr>
-                ))}
+  <tr
+    key={`${selectedSeason}-${row.manager}-${row.nhl_team || idx}`}
+    className={isNaturalOrder && row.rank === maxPlayoffTeams ? "standings-cutoff-row" : ""}
+  >
+    <td className={`standings-rank ${row.playoffStatus ? `is-${row.playoffStatus}` : ""}`}>
+      {idx + 1}
+      {isNaturalOrder && row.rank === maxPlayoffTeams && (
+        <span className="standings-cutoff-label">Cutoff</span>
+      )}
+    </td>
+    <td>
+      <span
+        className={`standings-team-badge-wrap ${row.playoffStatus ? `is-${row.playoffStatus}` : ""}`}
+        title={
+          row.playoffStatus === "clinched"
+            ? "Clinched a playoff spot"
+            : row.playoffStatus === "eliminated"
+            ? "Eliminated from playoff contention"
+            : undefined
+        }
+      >
+        <TeamBadge
+          key={`${selectedSeason}-${row.nhl_team || "none"}`}
+          team={row.nhl_team}
+          size="lg"
+        />
+      </span>
+    </td>
+    <td className="standings-manager">{row.manager}</td>
+    <td>{row.gp}</td>
+    <td>{row.wins}</td>
+    <td>{row.losses}</td>
+    <td>{row.ties}</td>
+    <td className="standings-pts">{row.points}</td>
+    <td className="col-extra">{row.goals_for}</td>
+    <td className="col-extra">{row.goals_against}</td>
+    <td className="col-extra">{row.goal_diff > 0 ? `+${row.goal_diff}` : row.goal_diff}</td>
+    <td className="col-extra">{row.gf_per_game.toFixed(2)}</td>
+    <td className="col-extra">{row.ga_per_game.toFixed(2)}</td>
+    <td className="col-extra">{row.tpr}</td>
+    <td className="col-extra">{row.max_pts}</td>
+    <td className={`col-extra standings-streak ${streakClass(row.streak)}`}> {row.streak || "–"}</td>
+  </tr>
+))}
+
               </tbody>
             </table>
           </div>
