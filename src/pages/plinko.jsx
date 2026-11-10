@@ -799,8 +799,29 @@ export default function PlinkoDraftPage() {
                           className="game-row-avatar"
                         />
                       )}
-                      <span className="home-standings-name" style={{ flex: 1 }}>
+                                                <span className="home-standings-name" style={{ flex: 1 }}>
                         {p.manager}
+                        {p.has_retry === false && (
+                          <span
+                            title="Single drop, no retry"
+                            style={{
+                              marginLeft: "12px",
+                              padding: "1px 7px",
+                              border: "1px solid rgba(239, 68, 68, 0.7)",
+                              background: "rgba(239, 68, 68, 0.15)",
+                              color: "#f87171",
+                              borderRadius: "999px",
+                              fontSize: "0.62rem",
+                              fontWeight: 700,
+                              lineHeight: 1.4,
+                              whiteSpace: "nowrap",
+                              verticalAlign: "middle",
+                              cursor: "help",
+                            }}
+                          >
+                            No Retry
+                          </span>
+                        )}
                       </span>
 
                       {assignedTeam ? (
