@@ -34,20 +34,19 @@ function getAvatarUrl(mgr) {
   if (!mgr) return null;
   const raw = mgr.discord_avatar_url;
   if (raw && raw.startsWith("http")) return raw;
-    if (raw && mgr.discord_id) {
+  if (raw && mgr.discord_id) {
     const ext = raw.startsWith("a_") ? "gif" : "png";
-    return `https://discordapp.com{mgr.discord_id}/${raw}.${ext}?size=128`;
+    return `https://cdn.discordapp.com/avatars/${mgr.discord_id}/${raw}.${ext}?size=128`;
   }
   if (mgr.discord_id) {
     const idx = Number(BigInt(mgr.discord_id) >> 22n) % 6;
-    return `https://discordapp.com{idx}.png`;
+    return `https://cdn.discordapp.com/embed/avatars/${idx}.png`;
   }
-
   return null;
 }
 
 export async function notifyTurnStarted({ season, manager, req }) {
-  const url = process.env.DISCORD_TEST_URL;
+  const url = process.env.DISCORD_LEAGUE_UPDATES_URL;
   if (!url) return;
 
   try {
@@ -58,8 +57,8 @@ export async function notifyTurnStarted({ season, manager, req }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: `<@582240735793774618> 🚨 **${manager}** is about to **drop** a puck for **Season ${season} ** yinz!\n👀 Watch live: ${watchUrl}`,
-        allowed_mentions: { parse: ["users"] },
+        content: `@everyone 🚨 **${manager}** is about to **drop** a puck for **Season ${season}** yinz!\n👀 Watch live: ${watchUrl}`,
+        allowed_mentions: { parse: ["everyone"] },
       }),
     });
   } catch (err) {
@@ -67,9 +66,8 @@ export async function notifyTurnStarted({ season, manager, req }) {
   }
 }
 
-
 export async function notifyTeamFinalized({ season, manager, team, req, delayMs = 0 }) {
-  const url = process.env.DISCORD_TEST_URL;
+  const url = process.env.DISCORD_LEAGUE_UPDATES_URL;
   if (!url) return;
 
   if (delayMs > 0) {
