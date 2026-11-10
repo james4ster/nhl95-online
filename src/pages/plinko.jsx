@@ -791,7 +791,6 @@ export default function PlinkoDraftPage() {
                         borderRadius: "6px",
                       }}
                     >
-                      <span className="home-standings-rank">{p.draft_position ?? idx + 1}</span>
                       {mgr?.discord_avatar_url && (
                         <ManagerAvatar
                           src={mgr.discord_avatar_url}
