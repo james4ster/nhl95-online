@@ -9,6 +9,7 @@ import ChampionsPage from "./pages/champions.jsx";
 import StatsPage from "./pages/stats.jsx";
 import ManagerProfile from "./pages/managers.jsx";
 import RecordsPage from "./pages/records.jsx";
+import PlinkoDraftPage from "./pages/plinko.jsx";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/managers" element={<ManagerProfile />} />
         <Route path="/managers/:managerId" element={<ManagerProfile />} />  
         <Route path="/records" element={<RecordsPage />} />
+        <Route path="/plinko" element={<PlinkoDraftPage />} />
       </Routes>
     </Router>
   );
