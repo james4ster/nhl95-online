@@ -17,15 +17,18 @@ export default function HomePage() {
   const [lastGames, setLastGames] = useState([]);
   const [topManagers, setTopManagers] = useState([]);
   const [highlights, setHighlights] = useState([]);
+  const [teamSelectLive, setTeamSelectLive] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       const { data: currentSeason } = await supabase
         .from("seasons")
-        .select("season, end_date")
+        .select("season, end_date, team_select_status")
         .order("season", { ascending: false })
         .limit(1)
         .single();
+
+      setTeamSelectLive(currentSeason?.team_select_status === "live");
 
       if (currentSeason?.end_date) {
         const end = new Date(currentSeason.end_date);
@@ -124,6 +127,17 @@ export default function HomePage() {
           <img src="/images/logo.jpg" alt="PNPL League" className="home-hero-logo" />
           <h1 className="home-hero-title">PNPL League</h1>
         </div>
+
+         {teamSelectLive && (
+          <Link to="/plinko" className="plinko-cta">
+            <span className="plinko-cta-dot" aria-hidden="true" />
+            <span className="plinko-cta-text">
+              <strong>Team selection is live</strong>
+              <small>Drop your puck and pick your NHL team</small>
+            </span>
+            <span className="plinko-cta-go">Go to Plinko →</span>
+          </Link>
+        )}
 
         {/* Season banner — quick stats + countdown, one thin strip */}
         <div className="panel season-banner">
